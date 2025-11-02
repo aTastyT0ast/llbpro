@@ -1,0 +1,13 @@
+.tourney-winner {
+    background-color: #FFD700;
+}
+
+.rating-up {
+    color: limegreen;
+    font-weight: bold;
+}
+
+.rating-down {
+    color: red;
+    font-weight: bold;
+}

@@ -1,0 +1,68 @@
+button.blaze {
+    border: transparent;
+    padding: 0.6em 1.2em;
+    font-size: 1em;
+    line-height: 1;
+    height: 48px;
+
+    background-color: black;
+    color: white;
+    margin: 16px;
+    border-radius: 0;
+    font-family: 'BN-Elements', sans-serif;
+    transform: skewX(-10deg);
+    border-bottom: white 4px solid;
+    border-right: white 8px solid;
+    filter: drop-shadow(4px 0px 0px black) drop-shadow(4px 0px 0px white) drop-shadow(4px 0px 0px black);
+    -webkit-filter: drop-shadow(4px 0px 0px black) drop-shadow(4px 0px 0px white) drop-shadow(4px 0px 0px black);
+    transition: transform 0.1s ease;
+    white-space: nowrap;
+}
+
+button.blaze:hover {
+    background-color: white;
+    color: black;
+    border-bottom: #1efff7 4px solid;
+    border-right: #1efff7 8px solid;
+    filter: drop-shadow(4px 0px 0px white) drop-shadow(4px 0px 0px #1efff7) drop-shadow(4px 0px 0px white);
+    -webkit-filter: drop-shadow(4px 0px 0px white) drop-shadow(4px 0px 0px #1efff7) drop-shadow(4px 0px 0px white);
+    transition: transform 0.1s ease;
+    transform: skewX(-10deg) translateX(10px);
+}
+
+button.blaze p {
+    transform: skewX(10deg);
+    margin: 0;
+}
+
+button.ll1 p {
+    transform: skewX(-45deg);
+    margin: 0;
+}
+
+button.ll1 {
+    padding: 0.6em 1.2em;
+    font-size: 1em;
+    line-height: 1;
+    height: 48px;
+
+    /*background-color: #141414;*/
+    background: linear-gradient(90deg, #141414 11%, #0a0a0a 11%, #0a0a0a 34%, #141414 34%, #141414 38%, #0a0a0a 38%, #0a0a0a 48%, #141414 48%);
+    color: #af190b;
+    margin: 16px;
+    border-radius: 0;
+    text-transform: uppercase;
+    font-family: 'GRATIS', sans-serif;
+    transform: skewX(45deg);
+    border: #545454 2px solid;
+    filter: drop-shadow(0px 6px 0px black);
+    -webkit-filter: drop-shadow(0px 6px 0px black);
+    transition: transform 0.1s ease;
+    white-space: nowrap;
+}
+
+button.ll1:hover {
+    color: white;
+    transition: transform 0.1s ease;
+    transform: skewX(45deg) translateX(10px);
+}

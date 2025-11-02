@@ -1,0 +1,15 @@
+.win {
+    color: limegreen;
+}
+
+.loss {
+    color: red;
+}
+
+.probable {
+    color: limegreen;
+}
+
+.improbable {
+    color: red;
+}

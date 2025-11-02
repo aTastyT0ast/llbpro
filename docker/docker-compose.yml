@@ -1,0 +1,12 @@
+name: llbpro
+services:
+  localstack:
+    image: localstack/localstack
+    container_name: llbpro-localstack
+    environment:
+      SERVICES: dynamodb
+      LOCALSTACK_DYNAMODB_IN_MEMORY: 1
+    ports:
+      - "4566:4566"
+    volumes:
+      - "./init-aws.sh:/etc/localstack/ready.d/init-aws.sh"

@@ -1,0 +1,45 @@
+td > div {
+    display: flex;
+    justify-content: center;
+    position: relative;
+}
+
+span.trend {
+    position: absolute;
+    left: 0;
+}
+
+td > div > span:nth-child(2) {
+    margin: auto;
+}
+
+td span.up {
+    color: #4caf50;
+}
+
+td span.down {
+    color: #f44336;
+}
+
+.leaderboard {
+    overflow: auto;
+    max-height: calc(100svh - 260px);
+    width: calc(100% - 100px);
+}
+
+thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+th {
+    text-align: center;
+}
+
+@media only screen and (max-width: 1280px) {
+    .leaderboard {
+        width: 100%;
+        max-height: calc(100svh - 230px);
+    }
+}

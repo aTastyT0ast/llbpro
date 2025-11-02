@@ -1,0 +1,88 @@
+.seeding-content {
+    display: flex;
+    justify-content: center;
+    align-items: start;
+    width: 95%;
+    padding: 16px;
+}
+
+button.platform-select {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    justify-content: center;
+    background-color:  darkgrey;
+}
+
+button.platform-select.selected {
+    /* make selected button look indented */
+    box-shadow: inset 0 0 10px 5px black;
+    border-color: black;
+}
+
+button img.Challonge {
+    width: 36px;
+}
+
+button img.GG {
+    width: 24px;
+}
+
+.tourney-form {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.seeding-table {
+    flex: 1;
+    overflow-y: auto;
+    max-height: calc(100vh - 330px);
+    width: calc(100% - 100px);
+}
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+    color: red;
+}
+
+/* Tooltip text */
+.tooltip .tooltip-text {
+    visibility: hidden;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    padding: 4px 8px;
+    border-radius: 6px;
+
+    /* Position the tooltip text */
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -60px;
+
+    /* Fade in tooltip */
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+/* Tooltip arrow */
+.tooltip .tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 10%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #555 transparent transparent transparent;
+}
+
+.tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
