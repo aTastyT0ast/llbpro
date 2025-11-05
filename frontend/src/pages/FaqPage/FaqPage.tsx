@@ -130,7 +130,7 @@ export const FaqPage = () => {
                     <CardTitle>Q: How can I support your endeavours?</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p>A: I plan on making the website open source, so you can contribute to the project directly.</p>
+                    <p>A: You can contribute to the project directly here: <a href={"https://github.com/aTastyT0ast/llbpro"}>https://github.com/aTastyT0ast/llbpro</a></p>
                 </CardContent>
             </Card>
         </div>
