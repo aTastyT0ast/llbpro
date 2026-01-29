@@ -44,13 +44,13 @@ const playersWithBelts = new Map(playersWithBeltsLines
 const playersWithPlaytimeLines = String(fs.readFileSync("../analysis/steam/combined_playtime.csv")).split("\n");
 const playersWithPlaytime = new Map(playersWithPlaytimeLines
     .map(line => {
-        const [name, challongeId , blaze, l1] = line.split(",");
+        const [name, challongeId, blaze, l1] = line.split(",");
         return [Number.parseInt(challongeId), {blaze: parseInt(blaze), l1: parseInt(l1)}];
     }));
 
 const userMappingsCsvLines = String(fs.readFileSync("../challonge/user_mapping.csv")).split("\n");
 userMappingsCsvLines.shift();
-const unregisteredChallongeParticipantsCsvLines = String(fs.readFileSync("../challonge/map_unregistered_challonge_parts.csv")).split("\n");
+const unregisteredChallongeParticipantsCsvLines = String(fs.readFileSync("../challonge/map_unregistered_challonge_parts.csv")).split("\r\n");
 unregisteredChallongeParticipantsCsvLines.shift();
 
 const usersWithMultipleChallongeAccounts = userMappingsCsvLines.map(line => {
@@ -113,14 +113,26 @@ usersWithMultipleChallongeAccounts.forEach(user => {
 });
 
 // vorbefüllen komplett unregistered felon
+const unregisteredFelons = [];
 unregisteredChallongeParticipants
     .filter(p => !p.challongeId)
-    .forEach(p => {
+    .forEach((felon) => {
+        if (!unregisteredFelons.some(f => f.ggDiscriminator === felon.ggDiscriminator)) {
+            unregisteredFelons.push({...felon, participations: [felon.partId]});
+        } else {
+            const felonWithMultipleParts = unregisteredFelons.find(f => f.ggDiscriminator === felon.ggDiscriminator);
+            felonWithMultipleParts.participations.push(felon.partId);
+        }
+    });
+
+
+unregisteredFelons
+    .forEach(felon => {
         correctMapping.set([...correctMapping.entries()].length, {
-            displayName: p.displayName,
+            displayName: felon.displayName,
             challonge: {
                 accounts: [],
-                participations: [p.partId],
+                participations: felon.participations,
             },
             gg: {
                 accounts: [],

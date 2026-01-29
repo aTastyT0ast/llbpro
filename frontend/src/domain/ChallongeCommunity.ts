@@ -1,12 +1,13 @@
 export enum ChallongeCommunity {
+    ROOM21 = 'ROOM21',
+    DELTA_LLB = 'DELTA LLB',
+    NPC = 'LLB New Player Challenge',
     MACH_LLB = 'Mach LLB',
     ROOFTOP = 'The Rooftop',
     LLT = 'Lethal League Tourneys',
     QUARTERLY_RAPPORT = 'Quarterly Rapport',
     SPHAT = 'SPHAT',
     SWINGBAIT_SPECIAL = 'The Swingbait Special Crew',
-    ROOM21 = 'ROOM21',
-    DELTA_LLB = 'DELTA LLB',
     BLAZE_N_COMMUNITY = 'Blaze N\' Community',
     LEGENDS = 'The Legends',
     TGOTG = 'TG\'s Occasional Tourney Group',
@@ -66,5 +67,7 @@ export function getSubDomain(community: ChallongeCommunity): string {
             return 'gg8';
         case ChallongeCommunity.DELTA_LLB:
             return 'a5eb02e276cfbbe7075bf4c2';
+        case ChallongeCommunity.NPC:
+            return '3cad99861a446564a5e0dac1';
     }
 }

@@ -108,14 +108,26 @@ usersWithMultipleChallongeAccounts.forEach(user => {
 });
 
 // vorbefüllen komplett unregistered felon
+const unregisteredFelons = [];
 unregisteredChallongeParticipants
     .filter(p => !p.challongeId)
-    .forEach(p => {
+    .forEach((felon) => {
+        if (!unregisteredFelons.some(f => f.ggDiscriminator === felon.ggDiscriminator)) {
+            unregisteredFelons.push({...felon, participations: [felon.partId]});
+        } else {
+            const felonWithMultipleParts = unregisteredFelons.find(f => f.ggDiscriminator === felon.ggDiscriminator);
+            felonWithMultipleParts.participations.push(felon.partId);
+        }
+    });
+
+
+unregisteredFelons
+    .forEach(felon => {
         correctMapping.set([...correctMapping.entries()].length, {
-            displayName: p.displayName,
+            displayName: felon.displayName,
             challonge: {
                 accounts: [],
-                participations: [p.partId],
+                participations: felon.participations,
             },
             gg: {
                 accounts: [],

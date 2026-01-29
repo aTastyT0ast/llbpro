@@ -11,9 +11,13 @@ export function getGlickoPlayerForChParticipant(participantId, correctMapping, t
         foundMappedPlayer = correctMapping.get(playerId);
     } else {
         // console.log("Fallback part id lookup for: " + participantId);
-        let matchedEntry = [...correctMapping.entries()].find(([_, user]) =>
+        let matchedEntries = [...correctMapping.entries()].filter(([_, user]) =>
             user.challonge.participations.includes(participantId)
         );
+        if (matchedEntries.length !== 1) {
+            console.warn(`Multiple or no players found for participant id ${participantId} in tourney ${tourney.id}. Using the first one.`);
+        }
+        let matchedEntry = matchedEntries[0];
         foundMappedPlayer = matchedEntry?.[1]; // key, value, that's why [1]
     }
 
