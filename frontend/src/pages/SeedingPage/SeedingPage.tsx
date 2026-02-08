@@ -18,6 +18,7 @@ import {LoadingSpinner} from "@/components/LoadingSpinner.tsx";
 import {useCombiState} from "@/hooks/useCombiState.ts";
 import {useGameParams} from "@/hooks/useGameParams.ts";
 import {getBeltColor} from "@/domain/Belt.ts";
+import {Checkbox} from "@/components/ui/checkbox.tsx";
 
 interface TourneySeedingResponse {
     tourneyName: string,
@@ -52,6 +53,7 @@ export const SeedingPage: FC = () => {
     const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.DESC);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<Error | undefined>();
+    const [selectedPlayerIds, setSelectedPlayerIds] = useState<number[]>([])
 
     if (!correctMapping) {
         return <LoadingSpinner/>
@@ -220,7 +222,7 @@ export const SeedingPage: FC = () => {
                                     </TooltipTrigger>
                                     <TooltipContent>
                                         {selectedPlatform === Platform.Challonge ?
-                                            <p>Example: challonge.com/MACH1 -{">"} MACH1</p> :
+                                            <p>Example: challonge.com/NPC30 -{">"} NPC30</p> :
                                             <p>Example: tournament/heat-wave-3/event/lethal-league-blaze-pc</p>
                                         }
                                     </TooltipContent>
@@ -266,14 +268,23 @@ export const SeedingPage: FC = () => {
                 {
                     tourneySeeding && (
                         <Card className={"w-[96vw] xl:w-auto"}>
-                            <CardHeader>
-                                <CardTitle>Participants of {tourneySeeding?.tourneyName || "..."}</CardTitle>
+                            <CardHeader className={"flex-row justify-between h-24"}>
+                                <CardTitle>Participants
+                                    of {tourneySeeding?.tourneyName || "..."}</CardTitle>
+                                {selectedPlayerIds.length >= 2 &&
+                                    <BlazeButton
+                                        onClick={() => {
+                                            window.open(`/${game}/head2head?playerIds=${selectedPlayerIds.join()}`, "_blank")
+                                        }}
+                                        label={"Open Head2Head stats"}
+                                    ></BlazeButton>}
                             </CardHeader>
                             <CardContent>
                                 <div className={"overflow-auto"}>
                                     <Table>
                                         <TableHeader>
                                             <TableRow className={"bg-black"}>
+                                                <TableHead>H2H</TableHead>
                                                 <TableHead>Seed</TableHead>
                                                 <TableHead>Name</TableHead>
                                                 {tableHeadCell(Sorter.RATING_LB_95, "Rating")}
@@ -350,6 +361,14 @@ export const SeedingPage: FC = () => {
 
                                                     return (
                                                         <TableRow key={index}>
+                                                            <TableCell><Checkbox disabled={participant.id === undefined}
+                                                                                 onCheckedChange={(checked) => {
+                                                                                     if (checked) {
+                                                                                         setSelectedPlayerIds([...selectedPlayerIds, participant.id!]);
+                                                                                     } else {
+                                                                                         setSelectedPlayerIds(selectedPlayerIds.filter(id => id !== participant.id));
+                                                                                     }
+                                                                                 }}/></TableCell>
                                                             <TableCell>{index + 1}</TableCell>
                                                             {nameCell}
                                                             <TableCell>{Math.round(participant.glickoStats.rating - 2 * participant.glickoStats.deviation)}</TableCell>

@@ -16,6 +16,7 @@ import {useCrossPlayer} from "@/hooks/useCrossPlayer.ts";
 import {useTourneyNavigation} from "@/hooks/useTourneyNavigation.ts";
 import {Platform} from "@/domain/Player.ts";
 import {getDateString} from "@/shared/date-utils.ts";
+import {useLocation} from "react-router-dom";
 
 export interface Head2HeadPlayer {
     id: number;
@@ -60,13 +61,23 @@ export const Head2HeadPage: FC = () => {
     const getTargetPlayerId = useCrossPlayer();
     const onPlayerClick = usePlayerNavigation();
     const onTourneyClick = useTourneyNavigation();
+    const location = useLocation();
+    const playerIdsParams = new URLSearchParams(location.search).get('playerIds');
+    const playerIds = playerIdsParams?.split(",").map(id => parseInt(id)).filter(id => !isNaN(id)) ?? [];
 
-    const [selectedPlayerIds, setSelectedPlayerIds] = useState<(number | undefined)[]>([undefined, undefined]);
+    let initiallySelectedPlayerIds: (number | undefined)[] = [undefined, undefined];
+    if (playerIds.length > 0) {
+        initiallySelectedPlayerIds = playerIds;
+    }
+    const [selectedPlayerIds, setSelectedPlayerIds] = useState<(number | undefined)[]>(initiallySelectedPlayerIds);
     const [displayedStat, setDisplayedStat] = useState<DisplayedStat>(DisplayedStat.STANDING);
 
 
     // TODO: think of a better way to handle this
     useEffect(() => {
+        if (playerIds.length > 0) {
+            return;
+        }
         setSelectedPlayerIds(prevSelectedPlayerIds => prevSelectedPlayerIds.map(playerId => {
             if (playerId === undefined) {
                 return undefined;
@@ -128,15 +139,15 @@ export const Head2HeadPage: FC = () => {
             )
             .sort((a, b) => b.tourney.date.getTime() - a.tourney.date.getTime())
             .map(tourney => ({
-            tourney: {
-                platform: tourney.tourney.platform,
-                id: tourney.tourney.id,
-                name: tourneys.find(t => t.id === tourney.tourney.id && t.platform === tourney.tourney.platform)?.name || "Unknown",
-                date: tourney.tourney.date
-            },
-            matches: tourney.matches
-                .filter(match => selectedPlayerIds.includes(match.player1) && selectedPlayerIds.includes(match.player2))
-        }))
+                tourney: {
+                    platform: tourney.tourney.platform,
+                    id: tourney.tourney.id,
+                    name: tourneys.find(t => t.id === tourney.tourney.id && t.platform === tourney.tourney.platform)?.name || "Unknown",
+                    date: tourney.tourney.date
+                },
+                matches: tourney.matches
+                    .filter(match => selectedPlayerIds.includes(match.player1) && selectedPlayerIds.includes(match.player2))
+            }))
     }
 
     const statsUniquePlayers = stats?.comparisons.reduce((acc: number[], prediction) => {
@@ -267,7 +278,7 @@ export const Head2HeadPage: FC = () => {
                                          playerIds={selectedPlayerIds.flatMap(id => id !== undefined ? [id] : [])}/>
 
                             {
-                                stats.matchHistory.length>0 && (
+                                stats.matchHistory.length > 0 && (
                                     <Card className={"mb-12"}>
                                         <CardHeader>
                                             <CardTitle>Matchup History</CardTitle>
@@ -290,8 +301,7 @@ export const Head2HeadPage: FC = () => {
                                                         </TableHeader>
                                                         <TableBody>
                                                             {
-                                                                entry.matches.map((match, index) =>
-                                                                {
+                                                                entry.matches.map((match, index) => {
                                                                     const p1 = allPlayers.find(p => p.id === match.player1);
                                                                     const p2 = allPlayers.find(p => p.id === match.player2);
                                                                     // sort by the same order in the selectedPlayerIds
@@ -311,12 +321,14 @@ export const Head2HeadPage: FC = () => {
 
                                                                     return <TableRow key={index}>
                                                                         <TableCell
-                                                                            className={"flex border-0 items-center justify-end"}><Crown className={`mr-auto ${player1Won ? "" : "invisible"}`}
-                                                                                   color={"gold"}/>{sortedPlayer1?.name}</TableCell>
+                                                                            className={"flex border-0 items-center justify-end"}><Crown
+                                                                            className={`mr-auto ${player1Won ? "" : "invisible"}`}
+                                                                            color={"gold"}/>{sortedPlayer1?.name}</TableCell>
                                                                         <TableCell>vs</TableCell>
                                                                         <TableCell
-                                                                            className={"flex border-0 items-center justify-start"}>{sortedPlayer2?.name}<Crown className={`ml-auto ${!player1Won ? "" : "invisible"}`}
-                                                                                                                                                               color={"gold"}/></TableCell>
+                                                                            className={"flex border-0 items-center justify-start"}>{sortedPlayer2?.name}<Crown
+                                                                            className={`ml-auto ${!player1Won ? "" : "invisible"}`}
+                                                                            color={"gold"}/></TableCell>
                                                                     </TableRow>;
                                                                 })
                                                             }
