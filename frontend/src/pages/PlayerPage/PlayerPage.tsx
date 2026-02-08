@@ -2,7 +2,7 @@ import {FC, useEffect, useRef} from 'react'
 import './PlayerPage.css'
 import {PlayerStats} from "../../components/PlayerStats.tsx";
 import {PlayerProfile} from "../../components/PlayerProfile.tsx";
-import {useParams} from "react-router-dom";
+import {useLocation, useParams} from "react-router-dom";
 import {RatingGraph} from "@/components/RatingGraph.tsx";
 import {TourneyHistory} from "@/components/TourneyHistory.tsx";
 import {MatchHistory} from "@/components/MatchHistory.tsx";
@@ -12,8 +12,11 @@ import {useCombiState} from "@/hooks/useCombiState.ts";
 
 export const PlayerPage: FC = () => {
     const {playerId: playerIdString} = useParams();
+    const location = useLocation();
+    const showRedacted = new URLSearchParams(location.search).get('showRedacted') === 'true';
     const {correctMapping, rankedMatches, tourneys} = useCombiState();
     const scrollRef = useRef<HTMLDivElement>(null);
+
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -42,6 +45,9 @@ export const PlayerPage: FC = () => {
         playerId
     );
 
+    if (player.displayName.includes("redacted") && !showRedacted) {
+        return <div className={"m-auto"}>REDACTED</div>
+    }
 
     const currentRank = [...correctMapping]
         .sort((a, b) => (b.glickoStats.rating - 2 * b.glickoStats.deviation) - (a.glickoStats.rating - 2 * a.glickoStats.deviation))

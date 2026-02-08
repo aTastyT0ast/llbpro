@@ -58,7 +58,7 @@ export const AccountCard: FC<AccountCardProps> = (props) => {
             <div className={"tag"}>
 <span>
 <img className={"icon " + platform} src={getPlatformIcon(platform)} alt={platform}/>
-<p>{username !== "DipG" ? username : "[redacted]"}</p>
+<p>{username}</p>
 </span>
             </div>
         </a>);

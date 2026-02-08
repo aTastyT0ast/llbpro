@@ -89,6 +89,11 @@ function LeaderBoardPage() {
             const filteredCharactersForGame = filteredCharacters.filter((character) => playableCharacters.includes(character));
             setFilteredCharacters(filteredCharactersForGame);
         }
+        if (game === Game.L1 && lastTourneyDaysFilter !== null) {
+            setLastTourneyDaysFilter(null)
+        } else if (game === Game.Blaze && lastTourneyDaysFilter === null) {
+            setLastTourneyDaysFilter(DEFAULT_MAX_DAYS_SINCE_LAST_TOURNEY);
+        }
     }, [game])
 
     const leaderBoard: LeaderBoardEntry[] = useMemo(() => {
@@ -400,7 +405,8 @@ function LeaderBoardPage() {
         <>
             <h1 className={"my-8"}>Leaderboard</h1>
             <div className={"absolute top-[200px] right-12 flex gap-4"}><DropdownMenu>
-                <DropdownMenuTrigger asChild className={"cursor-pointer"}><Filter color={anyFiltersApplied ? "#ea580c" : "white"}/></DropdownMenuTrigger>
+                <DropdownMenuTrigger asChild className={"cursor-pointer"}><Filter
+                    color={anyFiltersApplied ? "#ea580c" : "white"}/></DropdownMenuTrigger>
                 <DropdownMenuContent className={"dark"}>
                     {filterSelection}
                 </DropdownMenuContent>
