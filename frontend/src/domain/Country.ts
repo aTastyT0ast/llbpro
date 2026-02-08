@@ -19,6 +19,7 @@ import frFlag from '@/assets/flags/fr.svg';
 import grFlag from '@/assets/flags/gr.svg';
 import huFlag from '@/assets/flags/hu.svg';
 import ieFlag from '@/assets/flags/ie.svg';
+import itFlag from '@/assets/flags/it.svg';
 import kpFlag from '@/assets/flags/kp.svg';
 import ltFlag from '@/assets/flags/lt.svg';
 import mxFlag from '@/assets/flags/mx.svg';
@@ -59,6 +60,7 @@ export enum Country {
     GR = "gr",
     HU = "hu",
     IE = "ie",
+    IT = "it",
     LT = "lt",
     MX = "mx",
     NK = "nk",
@@ -123,6 +125,8 @@ export const getCountryFlag = (country: Country) => {
             return huFlag;
         case Country.IE:
             return ieFlag;
+        case Country.IT:
+            return itFlag;
         case Country.LT:
             return ltFlag;
         case Country.MX:
