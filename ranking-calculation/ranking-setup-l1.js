@@ -70,6 +70,8 @@ const unregisteredChallongeParticipants = unregisteredChallongeParticipantsCsvLi
     };
 });
 
+const DEFAULT_MIN_TOURNEY_COUNT = 5;
+
 const settings = {
     // tau : "Reasonable choices are between 0.3 and 1.2, though the system should
     //      be tested to decide which value results in greatest predictive accuracy."
@@ -666,7 +668,7 @@ function generateCustomSeedingForBlaze() {
 
 function updateGlickoHistory(glickoIds, tourney) {
     const globalRanking = [...correctMapping.values()]
-        .filter(p => p.glickoHistory.length > 1)
+        .filter(p => p.glickoHistory.length >= DEFAULT_MIN_TOURNEY_COUNT)
         // .filter(p => p.glickoPlayer.getRd() < 200)
         .sort((a, b) => b.glickoPlayer.getRating() - a.glickoPlayer.getRating());
 

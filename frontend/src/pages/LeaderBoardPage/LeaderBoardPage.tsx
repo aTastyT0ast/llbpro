@@ -1,5 +1,5 @@
 import {ReactElement, useEffect, useMemo, useState} from 'react'
-import {LeaderBoardEntry} from "../../domain/leaderboard.ts";
+import {LeaderBoardEntry} from "@/domain/leaderboard.ts";
 import './LeaderBoardPage.css';
 import {getMaxBy, getMinBy, SortOrder} from "@/shared/math-utils.ts";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table.tsx";
@@ -57,6 +57,9 @@ enum OptionalColumn {
     PLAYTIME = "Playtime",
 }
 
+const DEFAULT_MIN_TOURNEY_COUNT = 5;
+const DEFAULT_MAX_DAYS_SINCE_LAST_TOURNEY = 365;
+
 function LeaderBoardPage() {
     const {correctMapping, tourneys, rankedMatches} = useCombiState();
     const game = useGameParams();
@@ -66,8 +69,9 @@ function LeaderBoardPage() {
     const [filteredCharacters, setFilteredCharacters] = useState<Character[]>([]);
     const [filteredContinents, setFilteredContinents] = useState<Continent[]>([]);
     const [filteredBelts, setFilteredBelts] = useState<Belt[]>([]);
-    const [lastTourneyDaysFilter, setLastTourneyDaysFilter] = useState<number | null>(game === Game.Blaze ? 365 : null);
+    const [lastTourneyDaysFilter, setLastTourneyDaysFilter] = useState<number | null>(game === Game.Blaze ? DEFAULT_MAX_DAYS_SINCE_LAST_TOURNEY : null);
     const [nameFilter, setNameFilter] = useState<string>("");
+    const [minTourneyCount, setMinTourneyCount] = useState<number | null>(DEFAULT_MIN_TOURNEY_COUNT);
     const [showRelativeRank, setShowRelativeRank] = useState<boolean>(true);
     const playableCharacters = getPlayableCharacters(game);
     const [columns, setColumns] = useState<OptionalColumn[]>([
@@ -94,12 +98,12 @@ function LeaderBoardPage() {
 
         const lastTourney = tourneys.sort((a, b) => b.date.getTime() - a.date.getTime())[0];
         const sortedRanking = [...correctMapping]
-            .filter(entry => entry.glickoHistory.length > 1)
+            .filter(entry => entry.glickoHistory.length >= (minTourneyCount || 0))
             .sort((a, b) => (b.glickoStats.rating - 2 * b.glickoStats.deviation) - (a.glickoStats.rating - 2 * a.glickoStats.deviation));
 
         return correctMapping.map((player) => {
             const currentRank = sortedRanking.findIndex(p => p.id === player.id) + 1;
-            const peakRank = player.glickoHistory.length > 2
+            const peakRank = player.glickoHistory.length > DEFAULT_MIN_TOURNEY_COUNT
                 ? getMinBy(player.glickoHistory.filter(entry => entry.rank), "rank").rank
                 : currentRank;
             const peakRating = getMaxBy(player.glickoHistory, "rating").rating;
@@ -221,6 +225,7 @@ function LeaderBoardPage() {
         .filter((entry) => game === Game.L1 || filteredBelts.length === 0 || entry.belt && filteredBelts.includes(entry.belt))
         .filter((entry) => lastTourneyDaysFilter === null || entry.daysSinceLastTourney <= lastTourneyDaysFilter)
         .filter((entry) => nameFilter === "" || entry.name.toLowerCase().includes(nameFilter.toLowerCase()))
+        .filter((entry) => entry.tourneyCount >= (minTourneyCount || 1))
         .sort(sortFunction);
 
     const minDeviation = Math.min(...filteredLeaderboard.map(entry => entry.deviation));
@@ -365,6 +370,16 @@ function LeaderBoardPage() {
             value={nameFilter}
             onChange={
                 (e) => setNameFilter(e.target.value)
+            }/>
+        <DropdownMenuLabel>Minimum tourney participations</DropdownMenuLabel>
+        <Input
+            placeholder={"Enter minimum number of tourney participations"}
+            value={minTourneyCount === null ? "" : minTourneyCount}
+            onChange={
+                (e) => {
+                    const value = e.target.value;
+                    setMinTourneyCount(Number.isNaN(parseInt(value)) ? null : parseInt(value));
+                }
             }/>
     </>
 
