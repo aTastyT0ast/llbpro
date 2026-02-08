@@ -9,7 +9,7 @@ import {FullPlayerData, Tourney, TourneyType} from "@/state/GlobalStateProvider.
 import {getRatingDiffClassName} from "@/shared/stat-utils.ts";
 import {usePlayerNavigation} from "@/hooks/usePlayerNavigation.ts";
 import {getTime} from "@/shared/date-utils.ts";
-import {Award, Crown, ExternalLink} from "lucide-react";
+import {Award, Crown, ExternalLink, Tag} from "lucide-react";
 import {getRatingUpdate} from "@/shared/math-utils.ts";
 import {PlacementBarChart} from "@/components/PlacementBarChart.tsx";
 import challongeIcon from "@/assets/challonge.svg";
@@ -20,6 +20,7 @@ import ytIcon from "@/assets/yt.png";
 import twitchIcon from "@/assets/twitch.png";
 import {Switch} from "@/components/ui/switch.tsx";
 import {Label} from "@/components/ui/label.tsx";
+import {getBeltColor} from "@/domain/Belt.ts";
 
 export const TourneyPage: FC = () => {
     const {tourneyId: tourneyIdString, platform: platformString} = useParams();
@@ -193,6 +194,26 @@ export const TourneyPage: FC = () => {
                                                 } else if (p.placement === 3) {
                                                     placementIcon = <Award color={"#cd7f32"}/>;
                                                 }
+
+                                                const belt = player.belt
+                                                    ? <Tag className={"h-7 mr-1 absolute left-[-20px]"}
+                                                           color={getBeltColor(player.belt)}/>
+                                                    : undefined;
+
+                                                let nameCell = <div className={"text-xl blaze-font"}>
+                                                    {player.name}
+                                                </div>;
+
+                                                if (belt) {
+                                                    nameCell =
+                                                        <div>
+                                                            {belt}
+                                                            <span
+                                                                className={"text-xl blaze-font"}>{player.name}</span>
+                                                        </div>
+                                                    ;
+                                                }
+
                                                 return <TableRow key={p.participantId}>
                                                     <TableCell
                                                         className={"flex border-0 items-center justify-center"}>{p.placement <= 3 ?
@@ -201,7 +222,7 @@ export const TourneyPage: FC = () => {
                                                         <TableCell>{p.seed}</TableCell>}
                                                     <TableCell>{wins}-{losses}</TableCell>
                                                     <TableCell className={"hover-highlight cursor-pointer"}
-                                                               onClick={onPlayerClick(player.id)}>{player.name}</TableCell>
+                                                               onClick={onPlayerClick(player.id)}>{nameCell}</TableCell>
                                                     {!noAliases && showAlias &&
                                                         <TableCell
                                                             className={"max-w-[200px] whitespace-normal"}>{p.name !== player.name ? p.name : "-"}</TableCell>}
