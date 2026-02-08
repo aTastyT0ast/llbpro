@@ -2,21 +2,22 @@ import React, {ChangeEvent, FC, ReactElement, useState} from "react";
 import './SeedingPage.css';
 import {BlazeButton} from "../../components/BlazeButton.tsx";
 import {FullPlayerData} from "../../state/GlobalStateProvider.tsx";
-import {ChallongeCommunity, getSubDomain} from "../../domain/ChallongeCommunity.ts";
-import {Platform} from "../../domain/Player.ts";
+import {ChallongeCommunity, getSubDomain} from "@/domain/ChallongeCommunity.ts";
+import {Platform} from "@/domain/Player.ts";
 import challongeIcon from "../../assets/challonge.svg";
 import ggIcon from "../../assets/gg.svg";
-import {SortOrder} from "../../shared/math-utils.ts";
+import {SortOrder} from "@/shared/math-utils.ts";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table.tsx";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select.tsx";
 import {Input} from "@/components/ui/input.tsx";
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group.tsx";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
-import {ArrowDown, ArrowUp, CircleHelp, EyeOff, TriangleAlert} from "lucide-react";
+import {ArrowDown, ArrowUp, CircleHelp, EyeOff, Tag, TriangleAlert} from "lucide-react";
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip.tsx";
 import {LoadingSpinner} from "@/components/LoadingSpinner.tsx";
 import {useCombiState} from "@/hooks/useCombiState.ts";
 import {useGameParams} from "@/hooks/useGameParams.ts";
+import {getBeltColor} from "@/domain/Belt.ts";
 
 interface TourneySeedingResponse {
     tourneyName: string,
@@ -286,10 +287,28 @@ export const SeedingPage: FC = () => {
                                             {seededPlayers && seededPlayers
                                                 .sort(sortFunction)
                                                 .map((participant, index) => {
+                                                    const belt = participant.belt
+                                                        ? <Tag className={"h-7 absolute left-[-32px] top-[-4px]"}
+                                                               color={getBeltColor(participant.belt)}/>
+                                                        : undefined;
+
                                                     let nameCell = <TableCell className={"blaze-font"}><a
                                                         href={`/${game}/players/${participant.id}`}
                                                         target={"_blank"}>{participant.name}</a>
                                                     </TableCell>;
+
+                                                    if (belt) {
+                                                        nameCell =
+                                                            <TableCell className={"blaze-font"}>
+                                                                <div>{belt}<a
+                                                                    href={`/${game}/players/${participant.id}`}
+                                                                    target={"_blank"}>{participant.name}</a>
+                                                                </div>
+                                                            </TableCell>
+                                                        ;
+                                                    }
+
+
                                                     if (participant.id === undefined) {
                                                         nameCell = <TableCell>
                                                             <TooltipProvider>
@@ -337,7 +356,8 @@ export const SeedingPage: FC = () => {
                                                             <TableCell>{Math.round(participant.glickoStats.rating)}</TableCell>
                                                             <TableCell>{participant.glickoHistory.length}</TableCell>
                                                             <TableCell>{daysSinceLastTourney}</TableCell>
-                                                            <TableCell className={"flex justify-center"}>{playtime}</TableCell>
+                                                            <TableCell
+                                                                className={"flex justify-center"}>{playtime}</TableCell>
                                                         </TableRow>
                                                     );
                                                 })}
@@ -350,5 +370,6 @@ export const SeedingPage: FC = () => {
                 }
             </div>
         </div>
-    );
+    )
+        ;
 }

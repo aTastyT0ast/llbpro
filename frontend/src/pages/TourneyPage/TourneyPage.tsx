@@ -196,7 +196,7 @@ export const TourneyPage: FC = () => {
                                                 }
 
                                                 const belt = player.belt
-                                                    ? <Tag className={"h-7 mr-1 absolute left-[-20px]"}
+                                                    ? <Tag className={"h-7 absolute left-[-20px]"}
                                                            color={getBeltColor(player.belt)}/>
                                                     : undefined;
 
