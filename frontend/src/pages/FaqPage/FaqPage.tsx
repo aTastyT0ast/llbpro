@@ -98,9 +98,10 @@ export const FaqPage = () => {
                     <CardTitle>Q: Why am I not in the leaderboard?</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p>A: The leaderboard only shows players who have competed in at least two tournaments.</p>
+                    <p>A: The leaderboard only shows players who have competed in at least two tournaments and whose last tournament was no longer than a year ago.</p>
                     <p>Tournament participations without an actually played out match do not count.</p>
                     <p>You CAN however find yourself in the Head2Head page and open your player profile from there.</p>
+                    <p>The leaderboard page now has some default filters active. Feel free to change them for yourself.</p>
                 </CardContent>
             </Card>
             <Card className={"mb-4"}>

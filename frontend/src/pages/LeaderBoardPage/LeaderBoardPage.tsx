@@ -59,16 +59,16 @@ enum OptionalColumn {
 
 function LeaderBoardPage() {
     const {correctMapping, tourneys, rankedMatches} = useCombiState();
+    const game = useGameParams();
     const [currentSorter, setCurrentSorter] = useState<Sorter>(Sorter.RATING_LB_95);
     const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.DESC);
     const onPlayerClick = usePlayerNavigation();
     const [filteredCharacters, setFilteredCharacters] = useState<Character[]>([]);
     const [filteredContinents, setFilteredContinents] = useState<Continent[]>([]);
     const [filteredBelts, setFilteredBelts] = useState<Belt[]>([]);
-    const [lastTourneyDaysFilter, setLastTourneyDaysFilter] = useState<number | null>(null);
+    const [lastTourneyDaysFilter, setLastTourneyDaysFilter] = useState<number | null>(game === Game.Blaze ? 365 : null);
     const [nameFilter, setNameFilter] = useState<string>("");
-    const [showRelativeRank, setShowRelativeRank] = useState<boolean>(false);
-    const game = useGameParams();
+    const [showRelativeRank, setShowRelativeRank] = useState<boolean>(true);
     const playableCharacters = getPlayableCharacters(game);
     const [columns, setColumns] = useState<OptionalColumn[]>([
         OptionalColumn.RATING_LB_95,
@@ -77,6 +77,8 @@ function LeaderBoardPage() {
         OptionalColumn.VOLATILITY,
         OptionalColumn.TOURNEY_COUNT
     ]);
+
+    const anyFiltersApplied = filteredCharacters.length > 0 || filteredContinents.length > 0 || filteredBelts.length > 0 || lastTourneyDaysFilter !== null || nameFilter !== "";
 
     useEffect(() => {
         if (game === Game.L1 && filteredCharacters.length > 0) {
@@ -383,7 +385,7 @@ function LeaderBoardPage() {
         <>
             <h1 className={"my-8"}>Leaderboard</h1>
             <div className={"absolute top-[200px] right-12 flex gap-4"}><DropdownMenu>
-                <DropdownMenuTrigger asChild className={"cursor-pointer"}><Filter/></DropdownMenuTrigger>
+                <DropdownMenuTrigger asChild className={"cursor-pointer"}><Filter color={anyFiltersApplied ? "#ea580c" : "white"}/></DropdownMenuTrigger>
                 <DropdownMenuContent className={"dark"}>
                     {filterSelection}
                 </DropdownMenuContent>
