@@ -11,6 +11,7 @@ import coFlag from '@/assets/flags/co.svg';
 import czFlag from '@/assets/flags/cz.svg';
 import deFlag from '@/assets/flags/de.svg';
 import dkFlag from '@/assets/flags/dk.svg';
+import egFlag from '@/assets/flags/eg.svg';
 import esFlag from '@/assets/flags/es.svg';
 import euFlag from '@/assets/flags/eu.svg';
 import fiFlag from '@/assets/flags/fi.svg';
@@ -49,6 +50,7 @@ export enum Country {
     CZ = "cz",
     DE = "de",
     DK = "dk",
+    EG = "eg",
     ES = "es",
     EU = "eu",
     FI = "fi",
@@ -103,6 +105,8 @@ export const getCountryFlag = (country: Country) => {
             return deFlag;
         case Country.DK:
             return dkFlag;
+        case Country.EG:
+            return egFlag;
         case Country.ES:
             return esFlag;
         case Country.EU:

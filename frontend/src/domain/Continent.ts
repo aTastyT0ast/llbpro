@@ -6,6 +6,7 @@ export enum Continent {
     NA = "North America",
     SA = "South America",
     OC = "Oceania",
+    AF = "Africa",
 }
 
 export function getContinentForCountry(country: Country): Continent {
@@ -28,6 +29,8 @@ export function getContinentForCountry(country: Country): Continent {
         case Country.SV:
         case Country.NA:
             return Continent.NA;
+        case Country.EG:
+            return Continent.AF;
         default:
             return Continent.EU;
     }

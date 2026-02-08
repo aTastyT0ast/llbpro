@@ -1,4 +1,4 @@
-import {FC} from "react";
+import {FC, useState} from "react";
 import {useNavigate, useParams} from "react-router-dom";
 import {useCombiState} from "@/hooks/useCombiState.ts";
 import {LoadingSpinner} from "@/components/LoadingSpinner.tsx";
@@ -18,12 +18,15 @@ import {BracketPreview} from "@/components/BracketPreview.tsx";
 import {useGameParams} from "@/hooks/useGameParams.ts";
 import ytIcon from "@/assets/yt.png";
 import twitchIcon from "@/assets/twitch.png";
+import {Switch} from "@/components/ui/switch.tsx";
+import {Label} from "@/components/ui/label.tsx";
 
 export const TourneyPage: FC = () => {
     const {tourneyId: tourneyIdString, platform: platformString} = useParams();
     const tourneyId = Number(tourneyIdString);
     const navigate = useNavigate();
     const game = useGameParams();
+    const [showAlias, setShowAlias] = useState<boolean>(false)
 
     let platform = Platform.CUSTOM;
     switch (platformString) {
@@ -97,7 +100,8 @@ export const TourneyPage: FC = () => {
                         <CardContent>
                             <p>Date: {tourney.date.toLocaleString()}</p>
                             <p>{tourney.participants.length} participants</p>
-                            <p>URL: <a target={"_blank"} href={tourney.url}>{tourney.url}<ExternalLink className="ml-1 pb-1 inline"/></a></p>
+                            <p>URL: <a target={"_blank"} href={tourney.url}>{tourney.url}<ExternalLink
+                                className="ml-1 pb-1 inline"/></a></p>
                             {
                                 (tourney.ytVods.length > 0 || tourney.twitchVods.length > 0) && (
                                     <>
@@ -143,6 +147,11 @@ export const TourneyPage: FC = () => {
                         <CardHeader>
                             <CardTitle>Placements</CardTitle>
                         </CardHeader>
+                        {!noAliases && <div className="flex items-center space-x-2 my-2 ml-2">
+                            <Switch id="showAlias" checked={showAlias}
+                                    onCheckedChange={() => setShowAlias(!showAlias)}/>
+                            <Label htmlFor="showAlias">Show participant alias</Label>
+                        </div>}
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -151,7 +160,7 @@ export const TourneyPage: FC = () => {
                                         && <TableHead>Seed</TableHead>}
                                     <TableHead>Standing</TableHead>
                                     <TableHead>Player</TableHead>
-                                    {!noAliases && <TableHead>Alias</TableHead>}
+                                    {!noAliases && showAlias && <TableHead>Alias</TableHead>}
                                     <TableHead>Rating</TableHead>
                                     <TableHead>ATR</TableHead>
                                     <TableHead>+/-</TableHead>
@@ -178,13 +187,13 @@ export const TourneyPage: FC = () => {
                                                     !m.hasPlayer1Won && m.player1 === player.id
                                                 ).length || 0;
 
-                                            let placementIcon = <Crown color={"gold"}/>;
-                                            if (p.placement === 2) {
-                                                placementIcon = <Award color={"silver"}/>;
-                                            } else if (p.placement === 3) {
-                                                placementIcon = <Award color={"#cd7f32"}/>;
-                                            }
-                                            return <TableRow key={p.participantId}>
+                                                let placementIcon = <Crown color={"gold"}/>;
+                                                if (p.placement === 2) {
+                                                    placementIcon = <Award color={"silver"}/>;
+                                                } else if (p.placement === 3) {
+                                                    placementIcon = <Award color={"#cd7f32"}/>;
+                                                }
+                                                return <TableRow key={p.participantId}>
                                                     <TableCell
                                                         className={"flex border-0 items-center justify-center"}>{p.placement <= 3 ?
                                                         placementIcon : p.placement}</TableCell>
@@ -193,7 +202,7 @@ export const TourneyPage: FC = () => {
                                                     <TableCell>{wins}-{losses}</TableCell>
                                                     <TableCell className={"hover-highlight cursor-pointer"}
                                                                onClick={onPlayerClick(player.id)}>{player.name}</TableCell>
-                                                    {!noAliases &&
+                                                    {!noAliases && showAlias &&
                                                         <TableCell
                                                             className={"max-w-[200px] whitespace-normal"}>{p.name !== player.name ? p.name : "-"}</TableCell>}
                                                     <TableCell>{historyEntry.rating - historyEntry.deviation * 2}</TableCell>
