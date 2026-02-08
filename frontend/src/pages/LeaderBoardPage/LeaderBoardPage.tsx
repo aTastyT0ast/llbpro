@@ -82,7 +82,7 @@ function LeaderBoardPage() {
         OptionalColumn.TOURNEY_COUNT
     ]);
 
-    const anyFiltersApplied = filteredCharacters.length > 0 || filteredContinents.length > 0 || filteredBelts.length > 0 || lastTourneyDaysFilter !== null || nameFilter !== "";
+    const anyFiltersApplied = filteredCharacters.length > 0 || filteredContinents.length > 0 || filteredBelts.length > 0 || lastTourneyDaysFilter !== null || nameFilter !== "" || minTourneyCount !== null;
 
     useEffect(() => {
         if (game === Game.L1 && filteredCharacters.length > 0) {
