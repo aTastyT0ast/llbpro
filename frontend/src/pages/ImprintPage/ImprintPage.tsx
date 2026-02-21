@@ -1,6 +1,11 @@
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
+import {useEffect} from "react";
+import {SITE_TITLE} from "@/shared/constants.ts";
 
 export const ImprintPage = () => {
+    useEffect(() => {
+        document.title = `Imprint - ${SITE_TITLE}`;
+    }, []);
     return (
         <div className={"px-4 text-xxl overflow-y-auto flex flex-col items-center w-full  mb-[142px] iphone-bottom-padding"}>
             <h1 className={"my-8"}>Imprint</h1>

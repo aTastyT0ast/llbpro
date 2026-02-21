@@ -1,4 +1,4 @@
-import React, {ChangeEvent, FC, ReactElement, useState} from "react";
+import React, {ChangeEvent, FC, ReactElement, useEffect, useState} from "react";
 import './SeedingPage.css';
 import {BlazeButton} from "../../components/BlazeButton.tsx";
 import {FullPlayerData} from "../../state/GlobalStateProvider.tsx";
@@ -19,6 +19,7 @@ import {useCombiState} from "@/hooks/useCombiState.ts";
 import {useGameParams} from "@/hooks/useGameParams.ts";
 import {getBeltColor} from "@/domain/Belt.ts";
 import {Checkbox} from "@/components/ui/checkbox.tsx";
+import {SITE_TITLE} from "@/shared/constants.ts";
 
 interface TourneySeedingResponse {
     tourneyName: string,
@@ -54,6 +55,10 @@ export const SeedingPage: FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<Error | undefined>();
     const [selectedPlayerIds, setSelectedPlayerIds] = useState<number[]>([])
+
+    useEffect(() => {
+        document.title = `Seeding - ${SITE_TITLE}`;
+    }, []);
 
     if (!correctMapping) {
         return <LoadingSpinner/>

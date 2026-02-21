@@ -17,6 +17,7 @@ import {useTourneyNavigation} from "@/hooks/useTourneyNavigation.ts";
 import {Platform} from "@/domain/Player.ts";
 import {getDateString} from "@/shared/date-utils.ts";
 import {useLocation} from "react-router-dom";
+import {SITE_TITLE} from "@/shared/constants.ts";
 
 export interface Head2HeadPlayer {
     id: number;
@@ -72,6 +73,9 @@ export const Head2HeadPage: FC = () => {
     const [selectedPlayerIds, setSelectedPlayerIds] = useState<(number | undefined)[]>(initiallySelectedPlayerIds);
     const [displayedStat, setDisplayedStat] = useState<DisplayedStat>(DisplayedStat.STANDING);
 
+    useEffect(() => {
+        document.title = `H2H - ${SITE_TITLE}`;
+    }, []);
 
     // TODO: think of a better way to handle this
     useEffect(() => {

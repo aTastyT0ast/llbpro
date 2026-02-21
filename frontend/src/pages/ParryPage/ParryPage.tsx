@@ -1,5 +1,5 @@
 import {LoadingSpinner} from "@/components/LoadingSpinner.tsx";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {BlazeButton} from "@/components/BlazeButton.tsx";
 import {getRandomColor} from "@/shared/math-utils.ts";
 import {Card, CardContent} from "@/components/ui/card";
@@ -19,6 +19,7 @@ import fg_frame_1 from "@/assets/parry/fg_frame_1.png";
 import fg_frame_2 from "@/assets/parry/fg_frame_2.png";
 import fg_frame_3 from "@/assets/parry/fg_frame_3.png";
 import fg_frame_4 from "@/assets/parry/fg_frame_4.png";
+import {SITE_TITLE} from "@/shared/constants.ts";
 
 type FrameSources = {
     [key: string]: string[];
@@ -95,6 +96,10 @@ const addFrame = (gif: GIF, loadedFrames: Record<string, HTMLImageElement[]>, fr
 export const ParryPage = () => {
     const [parryColors, setParryColors] = useState<Record<string, string>>(getRandomColors());
     const [renderParry, setRenderParry] = useState(true);
+
+    useEffect(() => {
+        document.title = `Parry - ${SITE_TITLE}`;
+    }, []);
 
     const downloadGif = () => {
         const gif = new GIF({

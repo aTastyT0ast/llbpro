@@ -9,6 +9,7 @@ import {MatchHistory} from "@/components/MatchHistory.tsx";
 import {convertPlayer} from "@/shared/player-utils.ts";
 import {LoadingSpinner} from "@/components/LoadingSpinner.tsx";
 import {useCombiState} from "@/hooks/useCombiState.ts";
+import {SITE_TITLE} from "@/shared/constants.ts";
 
 export const PlayerPage: FC = () => {
     const {playerId: playerIdString} = useParams();
@@ -17,6 +18,20 @@ export const PlayerPage: FC = () => {
     const {correctMapping, rankedMatches, tourneys} = useCombiState();
     const scrollRef = useRef<HTMLDivElement>(null);
 
+    let playerId = undefined;
+    if (typeof playerIdString === "string") {
+        playerId = parseInt(playerIdString);
+    }
+
+    const fullPlayerData = correctMapping?.find(player => player.id === playerId);
+
+    useEffect(() => {
+        if (fullPlayerData) {
+            document.title = `${fullPlayerData.name} - ${SITE_TITLE}`;
+        } else {
+            document.title = SITE_TITLE;
+        }
+    }, [correctMapping]);
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -28,12 +43,7 @@ export const PlayerPage: FC = () => {
         return <LoadingSpinner/>
     }
 
-    let playerId = undefined;
-    if (typeof playerIdString === "string") {
-        playerId = parseInt(playerIdString);
-    }
 
-    const fullPlayerData = correctMapping.find(player => player.id === playerId);
     if (!fullPlayerData || playerId === undefined) {
         return <div>Player not found</div>
     }

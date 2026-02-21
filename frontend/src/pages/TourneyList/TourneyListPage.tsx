@@ -1,4 +1,4 @@
-import {FC, useState} from "react";
+import {FC, useEffect, useState} from "react";
 import './TourneyListPage.css';
 import {getDateStringFromDate} from "../../shared/date-utils.ts";
 import ggIcon from '../../assets/gg.svg';
@@ -21,6 +21,7 @@ import {
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group.tsx";
 import {Input} from "@/components/ui/input.tsx";
 import {comparePrizePools} from "@/shared/prize-utils.ts";
+import {SITE_TITLE} from "@/shared/constants.ts";
 
 enum Sorter {
     NAME = "name",
@@ -37,6 +38,10 @@ export const TourneyListPage: FC = () => {
     const [winnerFilter, setWinnerFilter] = useState<string>("");
     const [selectedPlatform, setSelectedPlatform] = useState<Platform | undefined>(undefined);
     const onTourneyClick = useTourneyNavigation();
+
+    useEffect(() => {
+        document.title = `Tournaments - ${SITE_TITLE}`;
+    }, []);
 
     if (!tourneys || tourneys.length === 0 || !correctMapping) {
         return <LoadingSpinner/>

@@ -28,6 +28,7 @@ import {Input} from "@/components/ui/input.tsx";
 import {Switch} from "@/components/ui/switch.tsx";
 import {Label} from "@/components/ui/label.tsx";
 import {USD_PER_EURO} from "@/shared/prize-utils.ts";
+import {SITE_TITLE} from "@/shared/constants.ts";
 
 enum Sorter {
     NAME = "name",
@@ -84,6 +85,10 @@ function LeaderBoardPage() {
         OptionalColumn.VOLATILITY,
         OptionalColumn.TOURNEY_COUNT
     ]);
+
+    useEffect(() => {
+        document.title = `Leaderboard - ${SITE_TITLE}`;
+    }, []);
 
     const anyFiltersApplied = filteredCharacters.length > 0 || filteredContinents.length > 0 || filteredBelts.length > 0 || lastTourneyDaysFilter !== null || nameFilter !== "" || minTourneyCount !== null;
 

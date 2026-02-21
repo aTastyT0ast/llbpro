@@ -1,4 +1,4 @@
-import {FC, useState} from "react";
+import {FC, useEffect, useState} from "react";
 import {useNavigate, useParams} from "react-router-dom";
 import {useCombiState} from "@/hooks/useCombiState.ts";
 import {LoadingSpinner} from "@/components/LoadingSpinner.tsx";
@@ -21,6 +21,7 @@ import twitchIcon from "@/assets/twitch.png";
 import {Switch} from "@/components/ui/switch.tsx";
 import {Label} from "@/components/ui/label.tsx";
 import {getBeltColor} from "@/domain/Belt.ts";
+import {SITE_TITLE} from "@/shared/constants.ts";
 
 export const TourneyPage: FC = () => {
     const {tourneyId: tourneyIdString, platform: platformString} = useParams();
@@ -41,6 +42,16 @@ export const TourneyPage: FC = () => {
     const {tourneys, correctMapping, rankedMatches} = useCombiState();
     const onPlayerClick = usePlayerNavigation();
 
+    const tourney: Tourney | undefined = tourneys?.find(t => t.id === tourneyId && t.platform === platform);
+
+    useEffect(() => {
+        if (tourney) {
+            document.title = `${tourney.name} - ${SITE_TITLE}`;
+        } else {
+            document.title = SITE_TITLE;
+        }
+    }, [correctMapping]);
+
     if (!tourneys || tourneys.length === 0 || !correctMapping || !rankedMatches) {
         return <LoadingSpinner/>
     }
@@ -51,7 +62,6 @@ export const TourneyPage: FC = () => {
             </div>
         );
     }
-    const tourney: Tourney | undefined = tourneys.find(t => t.id === tourneyId && t.platform === platform);
     if (!tourney) {
         navigate(`/${game}`);
         return (
