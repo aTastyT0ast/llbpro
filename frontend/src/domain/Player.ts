@@ -45,7 +45,8 @@ export interface TourneyParticipation {
     placement: number,
     participantCount: number,
     glicko: GlickoSnapshot,
-    rank: number
+    rank: number,
+    winnings: string
 }
 
 export interface GlickoSnapshot extends GlickoStats {

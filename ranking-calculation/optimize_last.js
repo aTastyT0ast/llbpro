@@ -212,7 +212,7 @@ fs.writeFileSync("../frontend/public/fflate_matches.json.gz", compressedMatches,
 // --- tourney data
 
 const chTourneys = JSON.parse(String(fs.readFileSync("../challonge/all_challonge_tourneys.json")));
-const optiCh = chTourneys.map(({tournament, ytVods, twitchVods}) => {
+const optiCh = chTourneys.map(({tournament, ytVods, twitchVods, prizepool}) => {
     const {
         id,
         name,
@@ -313,13 +313,15 @@ const optiCh = chTourneys.map(({tournament, ytVods, twitchVods}) => {
         shortParts,
         tourneyType,
         ytVods,
-        twitchVods
+        twitchVods,
+        prizepool
     ]
 });
 
 const compressedCh = gzipSync(Buffer.from(JSON.stringify(optiCh), "utf-8"));
 fs.writeFileSync("../frontend/public/fflate_ch.json.gz", compressedCh, {encoding: "utf-8"});
 
+const ggTourneysSourceLines = String(fs.readFileSync("../gg/gg_tourneys.csv")).split('\r\n');
 const ggTourneys = JSON.parse(String(fs.readFileSync("../gg/all_gg_tourneys.json")));
 const optiGG = ggTourneys.map((entry) => {
     const {id, tournament, slug, startAt, standings} = entry.event;
@@ -361,6 +363,19 @@ const optiGG = ggTourneys.map((entry) => {
     const date = new Date(0);
     date.setUTCSeconds(startAt)
 
+    const correctLine = ggTourneysSourceLines.find((line)=> {
+        const [url] = line.split(',');
+        const slugFromUrl = url.split("start.gg/")[1];
+        return slugFromUrl === slug;
+    });
+
+    if (!correctLine) {
+        throw new Error("Could not find source line for gg tourney with slug: " + slug);
+    }
+
+    const prizepoolString = correctLine.split(',')[3];
+    const prizepool = prizepoolString ? prizepoolString : null;
+
     return [
         convertBase10ToBase64(id),
         tournament.name,
@@ -369,7 +384,8 @@ const optiGG = ggTourneys.map((entry) => {
         shortParts,
         null,
         entry.ytVods,
-        entry.twitchVods
+        entry.twitchVods,
+        prizepool
     ]
 });
 

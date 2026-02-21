@@ -218,6 +218,19 @@ export interface Tourney {
     tourneyType: TourneyType,
     ytVods: string[],
     twitchVods: string[],
+    prizepool: PrizePool | null,
+}
+
+export interface PrizePool {
+    prizePot: number,
+    payouts: number[],
+    currency: Currency,
+}
+
+export enum Currency {
+    USD = "$",
+    EUR = "€",
+    BP = "£",
 }
 
 export interface TourneyParticipant {

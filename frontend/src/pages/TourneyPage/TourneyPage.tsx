@@ -9,7 +9,7 @@ import {FullPlayerData, Tourney, TourneyType} from "@/state/GlobalStateProvider.
 import {getRatingDiffClassName} from "@/shared/stat-utils.ts";
 import {usePlayerNavigation} from "@/hooks/usePlayerNavigation.ts";
 import {getTime} from "@/shared/date-utils.ts";
-import {Award, Crown, ExternalLink, Tag} from "lucide-react";
+import {Award, Coins, Crown, ExternalLink, Tag} from "lucide-react";
 import {getRatingUpdate} from "@/shared/math-utils.ts";
 import {PlacementBarChart} from "@/components/PlacementBarChart.tsx";
 import challongeIcon from "@/assets/challonge.svg";
@@ -165,6 +165,7 @@ export const TourneyPage: FC = () => {
                                     <TableHead>Rating</TableHead>
                                     <TableHead>ATR</TableHead>
                                     <TableHead>+/-</TableHead>
+                                    {tourney.prizepool && <TableHead className={"flex items-center justify-center"}><Coins/></TableHead>}
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -230,6 +231,7 @@ export const TourneyPage: FC = () => {
                                                     <TableCell>{historyEntry.rating}</TableCell>
                                                     <TableCell
                                                         className={getRatingDiffClassName(diff)}>{diff}</TableCell>
+                                                    {tourney.prizepool && <TableCell>{tourney.prizepool.payouts[p.placement - 1] ? tourney.prizepool.payouts[p.placement - 1] + " " + tourney.prizepool.currency : ""}</TableCell>}
                                                 </TableRow>;
                                             }
                                         )

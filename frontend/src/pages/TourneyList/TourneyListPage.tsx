@@ -4,7 +4,7 @@ import {getDateStringFromDate} from "../../shared/date-utils.ts";
 import ggIcon from '../../assets/gg.svg';
 import challongeIcon from '../../assets/challonge.svg';
 import {Platform} from "../../domain/Player.ts";
-import {Tourney} from "../../state/GlobalStateProvider.tsx";
+import {PrizePool, Tourney} from "../../state/GlobalStateProvider.tsx";
 import {SortOrder} from "../../shared/math-utils.ts";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table.tsx";
 import {ArrowDown, ArrowUp, Filter, Video} from "lucide-react";
@@ -20,11 +20,13 @@ import {
 } from "@/components/ui/dropdown-menu.tsx";
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group.tsx";
 import {Input} from "@/components/ui/input.tsx";
+import {comparePrizePools} from "@/shared/prize-utils.ts";
 
 enum Sorter {
     NAME = "name",
     DATE = "date",
     COUNT = "count",
+    PRIZEPOOL = "prizepool"
 }
 
 export const TourneyListPage: FC = () => {
@@ -59,6 +61,8 @@ export const TourneyListPage: FC = () => {
                 return sortOrderFactor * (b.date.getTime() - a.date.getTime());
             case Sorter.COUNT:
                 return sortOrderFactor * (b.participants.length - a.participants.length);
+            case Sorter.PRIZEPOOL:
+                return sortOrderFactor * comparePrizePools(a, b);
         }
     }
 
@@ -89,6 +93,16 @@ export const TourneyListPage: FC = () => {
                 </div>
             </TableHead>
         );
+    }
+
+    const prizepoolContent = (prizePool: PrizePool | null) => {
+        if (!prizePool) {
+            return "";
+        }
+
+        const pot = prizePool.prizePot;
+        const formattedPot = !Number.isInteger(pot) ? pot.toFixed(2) : String(pot);
+        return formattedPot + " " + prizePool.currency;
     }
 
     const filteredTourneys = tourneys
@@ -160,6 +174,7 @@ export const TourneyListPage: FC = () => {
                             {tableHeadCell(Sorter.NAME, "Name")}
                             <TableHead>Winner</TableHead>
                             {tableHeadCell(Sorter.COUNT, "Participants")}
+                            {tableHeadCell(Sorter.PRIZEPOOL, "Prizepool")}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -176,6 +191,7 @@ export const TourneyListPage: FC = () => {
                                                onClick={onTourneyClick(tourney.id, tourney.platform)}>{tourney.name}</TableCell>
                                     <TableCell>{tourney.winner?.name}</TableCell>
                                     <TableCell>{tourney.participants.length}</TableCell>
+                                    <TableCell>{prizepoolContent(tourney.prizepool)}</TableCell>
                                 </TableRow>
                             ))}
                     </TableBody>

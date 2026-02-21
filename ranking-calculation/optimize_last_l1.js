@@ -199,7 +199,7 @@ fs.writeFileSync("../frontend/public/fflate_matches_l1.json.gz", compressedMatch
 // --- tourney data
 
 const chTourneys = JSON.parse(String(fs.readFileSync("../challonge/minimal_challonge_tourneys_l1.json")));
-const optiCh = chTourneys.map(({tournament, ytVods, twitchVods}) => {
+const optiCh = chTourneys.map(({tournament, ytVods, twitchVods, prizepool}) => {
     const {
         id, name, started_at, start_at, full_challonge_url, participants, group_stages_enabled,
         tournament_type
@@ -261,7 +261,8 @@ const optiCh = chTourneys.map(({tournament, ytVods, twitchVods}) => {
         shortParts,
         tourneyType,
         ytVods,
-        twitchVods
+        twitchVods,
+        prizepool
     ]
 });
 
@@ -318,7 +319,8 @@ const optiGG = ggTourneys.map((entry) => {
         shortParts,
         null,
         entry.ytVods,
-        entry.twitchVods
+        entry.twitchVods,
+        null // prizepool
     ]
 });
 
@@ -327,7 +329,7 @@ fs.writeFileSync("../frontend/public/fflate_gg_l1.json.gz", compressedGG, {encod
 
 export const jbl16 = JSON.parse(String(fs.readFileSync("../custom-tourneys/jbl16.json")));
 const optiJBL16 = [jbl16].map((tourney) => {
-    const {id: tourneyId, name, date, participants, url, ytVods, twitchVods} = tourney;
+    const {id: tourneyId, name, date, participants, url, ytVods, twitchVods, prizepool} = tourney;
     const shortParts = participants.map(({id: partId, final_rank, name, challonge_user_id}) => {
         let playerId = findPlayerIdForChallongeId2(challonge_user_id, correctMappingAsArray);
 
@@ -357,7 +359,8 @@ const optiJBL16 = [jbl16].map((tourney) => {
         shortParts,
         tourneyType,
         ytVods,
-        twitchVods
+        twitchVods,
+        prizepool
     ]
 });
 

@@ -7,7 +7,7 @@ import {getDateString} from "@/shared/date-utils.ts";
 import {TourneyStatsProps} from "@/components/PlayerStats.tsx";
 import {Card, CardHeader, CardTitle} from "@/components/ui/card.tsx";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table.tsx";
-import {Award, Crown, Video} from "lucide-react";
+import {Award, Coins, Crown, Video} from "lucide-react";
 import {Switch} from "@/components/ui/switch.tsx";
 import {Label} from "@/components/ui/label.tsx";
 import {useTourneyNavigation} from "@/hooks/useTourneyNavigation.ts";
@@ -24,6 +24,8 @@ export const TourneyHistory: FC<TourneyStatsProps> = ({tourneyHistory, player}) 
                 return ggIcon;
         }
     }
+
+    const hasWinnings = tourneyHistory.some(part => part.winnings);
 
     return (
         <Card>
@@ -46,6 +48,7 @@ export const TourneyHistory: FC<TourneyStatsProps> = ({tourneyHistory, player}) 
                         <TableHead className={"max-w-[168px]"}>Placement</TableHead>
                         <TableHead>Rating</TableHead>
                         <TableHead>+/-</TableHead>
+                        {hasWinnings && <TableHead className={"flex items-center justify-center"}><Coins/></TableHead>}
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -85,6 +88,7 @@ export const TourneyHistory: FC<TourneyStatsProps> = ({tourneyHistory, player}) 
                                     <TableCell className={"w-[100px]"}>{Math.round(part.glicko.rating)}</TableCell>
                                     <TableCell
                                         className={"w-[50px] " + getRatingDiffClassName(diff)}>{diff > 0 ? "+" + diff : diff}</TableCell>
+                                    {hasWinnings && <TableCell>{part.winnings}</TableCell>}
                                 </TableRow>
                             );
                         })}

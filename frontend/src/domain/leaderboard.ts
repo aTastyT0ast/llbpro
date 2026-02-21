@@ -20,4 +20,5 @@ export interface LeaderBoardEntry {
     country?: Country,
     belt?: Belt,
     playtime: number | null,
+    winningsInUsd: number,
 }

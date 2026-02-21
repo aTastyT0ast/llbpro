@@ -13,7 +13,7 @@ import {getCharacterIcon} from "@/shared/character-utils.ts";
 import {Country, getCountryFlag} from "@/domain/Country.ts";
 import {Belt, getBeltColor} from "@/domain/Belt.ts";
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group.tsx";
-import {Character} from "@/state/GlobalStateProvider.tsx";
+import {Character, Currency} from "@/state/GlobalStateProvider.tsx";
 import {Continent, getContinentForCountry} from "@/domain/Continent.ts";
 import {
     DropdownMenu,
@@ -27,6 +27,7 @@ import {Game, getPlayableCharacters} from "@/domain/Game.tsx";
 import {Input} from "@/components/ui/input.tsx";
 import {Switch} from "@/components/ui/switch.tsx";
 import {Label} from "@/components/ui/label.tsx";
+import {USD_PER_EURO} from "@/shared/prize-utils.ts";
 
 enum Sorter {
     NAME = "name",
@@ -41,6 +42,7 @@ enum Sorter {
     PEAK_RANK = "peakRank",
     PEAK_RATING = "peakRating",
     PLAYTIME = "playtime",
+    WINNINGS = "winnings",
 }
 
 enum OptionalColumn {
@@ -55,6 +57,7 @@ enum OptionalColumn {
     MATCH_COUNT = "Match #",
     MATCH_WINRATE = "Match Winrate",
     PLAYTIME = "Playtime",
+    WINNINGS = "Winnings",
 }
 
 const DEFAULT_MIN_TOURNEY_COUNT = 5;
@@ -132,6 +135,20 @@ function LeaderBoardPage() {
                 (match.player2 === player.id && !match.hasPlayer1Won)
             ).length;
 
+            const winningsInUsd = tourneys
+                .filter(tourney => tourney.prizepool)
+                .filter(tourney => tourney.participants.some(p => p.playerId === player.id))
+                .reduce((sum, tourney) => {
+                    const placement = tourney.participants.find(p => p.playerId === player.id)!.placement;
+                    const payout = tourney.prizepool!.payouts[placement - 1];
+                    if (payout) {
+                        if (tourney.prizepool!.currency === Currency.USD) {
+                            return sum + payout;
+                        }
+                        return sum + payout * USD_PER_EURO;
+                    }
+                    return sum;
+                }, 0);
 
             return {
                 id: player.id,
@@ -151,6 +168,7 @@ function LeaderBoardPage() {
                 country: player.country,
                 belt: player.belt,
                 playtime: player.playtime,
+                winningsInUsd: Math.round(winningsInUsd * 100) / 100,
             };
         });
     }, [correctMapping, tourneys, rankedMatches]);
@@ -187,6 +205,8 @@ function LeaderBoardPage() {
                 return sortOrderFactor * (b.peakRating - a.peakRating);
             case Sorter.PLAYTIME:
                 return sortOrderFactor * ((b.playtime !== null ? b.playtime : -1) - (a.playtime !== null ? a.playtime : -1));
+            case Sorter.WINNINGS:
+                return sortOrderFactor * (b.winningsInUsd - a.winningsInUsd);
         }
     }
 
@@ -433,6 +453,7 @@ function LeaderBoardPage() {
                             {tableHeadCell(Sorter.MATCH_COUNT, OptionalColumn.MATCH_COUNT)}
                             {tableHeadCell(Sorter.MATCH_WINRATE, OptionalColumn.MATCH_WINRATE)}
                             {tableHeadCell(Sorter.PLAYTIME, OptionalColumn.PLAYTIME)}
+                            {tableHeadCell(Sorter.WINNINGS, OptionalColumn.WINNINGS)}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -478,6 +499,8 @@ function LeaderBoardPage() {
                                             <TableCell>{entry.matchWinrate} %</TableCell>}
                                         {columns.includes(OptionalColumn.PLAYTIME) &&
                                             <TableCell className={"flex justify-center"}>{playtime}</TableCell>}
+                                        {columns.includes(OptionalColumn.WINNINGS) &&
+                                            <TableCell>{entry.winningsInUsd} $</TableCell>}
                                     </TableRow>
                                 );
                             })}

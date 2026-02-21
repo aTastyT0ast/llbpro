@@ -9,7 +9,7 @@ export const Footer: FC = () => {
     }
     return (
         <footer className={"flex justify-between text-sm"}>
-            <p>© 2025 aTastyT0ast</p>
+            <p>© 2026 aTastyT0ast</p>
             <p onClick={onClick} className={"cursor-pointer hover:text-[#1cabff] mr-8"}>Imprint</p>
         </footer>
     );

@@ -1,4 +1,4 @@
-import {Character, FullMatchData, FullPlayerData, Tourney} from "./GlobalStateProvider.tsx";
+import {Character, Currency, FullMatchData, FullPlayerData, PrizePool, Tourney} from "./GlobalStateProvider.tsx";
 import {Platform} from "../domain/Player.ts";
 import {Country} from "@/domain/Country.ts";
 import {Belt} from "@/domain/Belt.ts";
@@ -174,10 +174,11 @@ export type MiniTourney = [
     ][],
     tourneyType: number,
     ytVods: string[],
-    twitchVods: string[]
+    twitchVods: string[],
+    prizepool: string
 ]
 export const mapMiniTourney = (platform: Platform) => (mini: MiniTourney): Tourney => {
-    const [id, name, url, date, participants, tourneyType, ytVods, twitchVods] = mini;
+    const [id, name, url, date, participants, tourneyType, ytVods, twitchVods, prizepool] = mini;
 
     const full: Tourney = {
         id: convertBase64ToBase10(id),
@@ -194,9 +195,32 @@ export const mapMiniTourney = (platform: Platform) => (mini: MiniTourney): Tourn
         })),
         tourneyType,
         ytVods: ytVods ? ytVods : [],
-        twitchVods: twitchVods ? twitchVods : []
+        twitchVods: twitchVods ? twitchVods : [],
+        prizepool: prizepool ? parsePrizePool(prizepool) : null
     }
     return full;
+}
+
+const parsePrizePool = (prizePoolStr: string): PrizePool => {
+    let currency: Currency = Currency.USD;
+    let payouts: number[];
+    if (prizePoolStr.includes("€")) {
+        currency = Currency.EUR;
+        payouts = prizePoolStr.split("/").map(p => parseFloat(p.replace("€", "")));
+    } else if (prizePoolStr.includes("€")) {
+        currency = Currency.BP;
+        payouts = prizePoolStr.split("/").map(p => parseFloat(p.replace("£", "")));
+    } else {
+        payouts = prizePoolStr.split("/").map(p => parseFloat(p));
+    }
+
+    const prizePot = Math.round(payouts.reduce((a, b) => a + b, 0) * 100) / 100;
+
+    return {
+        prizePot: prizePot,
+        payouts: payouts,
+        currency
+    }
 }
 
 

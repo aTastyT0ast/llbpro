@@ -81,6 +81,13 @@ export function convertPlayer(
             const tourney = tourneys.find(t => t.id === entry.tourney.id);
             const participant = tourney?.participants.find(p => p.playerId === playerId)
 
+            let winnings = "";
+            if (tourney?.prizepool && participant && tourney.prizepool.payouts[participant.placement - 1]) {
+                const payout = tourney.prizepool.payouts[participant.placement - 1];
+                const formattedPayout = !Number.isInteger(payout) ? payout.toFixed(2) : String(payout)
+                winnings =  formattedPayout + " " + tourney.prizepool.currency;
+            }
+
             return ({
                 platform: entry.tourney.platform,
                 tourney: tourney !== undefined ? {
@@ -108,7 +115,8 @@ export function convertPlayer(
                         id: entry.tourney.id,
                         date: entry.tourney.date.toISOString()
                     }
-                }
+                },
+                winnings: winnings
             });
         }).reverse(),
         characters: fullPlayerData.characters,

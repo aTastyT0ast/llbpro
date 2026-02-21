@@ -37,12 +37,13 @@ async function fetchChallongeTourney(name, subdomain) {
 console.log(csvLines.length);
 
 const tourneys2 = (await chunkPromises(csvLines, 10, async (line) => {
-    const [, name, subdomain, ytVods, twitchVods] = line.split(',');
+    const [, name, subdomain, ytVods, twitchVods, prizepool] = line.split(',');
     const response = await fetchChallongeTourney(name, subdomain);
     return {
         ...response,
         ytVods: !ytVods ? [] : ytVods.split(';').map(v => v.trim()).filter(v => !!v),
         twitchVods: !twitchVods ? [] : twitchVods.split(';').map(v => v.trim()).filter(v => !!v),
+        prizepool: !prizepool ? null : prizepool
     };
 })).filter(t => !!t);
 

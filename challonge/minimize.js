@@ -4,7 +4,7 @@ import {writeJsonToFile} from "../utils.js";
 export const chTourneys = JSON.parse(String(fs.readFileSync("all_challonge_tourneys.json")));
 export const chTourneys_l1 = JSON.parse(String(fs.readFileSync("l1_challonge_tourneys.json")));
 
-const mapper = ({tournament: t, ytVods, twitchVods}) => ({
+const mapper = ({tournament: t, ytVods, twitchVods, prizepool}) => ({
     tournament: {
         id: t.id,
         name: t.name,
@@ -58,6 +58,7 @@ const mapper = ({tournament: t, ytVods, twitchVods}) => ({
     },
     ytVods,
     twitchVods,
+    prizepool
 });
 
 const minimal = chTourneys.map(mapper);
