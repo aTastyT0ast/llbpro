@@ -11,6 +11,8 @@ import {convertPlayer} from "@/shared/player-utils.ts";
 import {Player} from "@/domain/Player.ts";
 import {LoadingSpinner} from "@/components/LoadingSpinner.tsx";
 import {useCombiState} from "@/hooks/useCombiState.ts";
+import {useGameParams} from "@/hooks/useGameParams.ts";
+import {Game} from "@/domain/Game.tsx";
 
 const singleChartConfig = (playerId: number) => ({
     ["rating-" + playerId]: {
@@ -56,6 +58,7 @@ interface ChartData {
 
 export const RatingGraph: FC<RatingGraphProps> = (props) => {
     const {correctMapping, rankedMatches, tourneys} = useCombiState();
+    const game = useGameParams();
 
     if (!correctMapping || !rankedMatches || !tourneys || tourneys.length === 0) {
         return <LoadingSpinner/>
@@ -115,6 +118,10 @@ export const RatingGraph: FC<RatingGraphProps> = (props) => {
         return yScale === YDimension.Rating && comparedRating === peakRating || yScale === YDimension.Rank && comparedRank === peakRank;
     }
 
+    const oneWeekTime = 7 * 24 * 60 * 60 * 1000;
+    const lastPlayerTournamentDateTime = Math.max(...players.flatMap(player => player.tourneyHistory.map(part => new Date(part.date).getTime()))) + oneWeekTime;
+    const lastTimePoint = xScale === XDimension.Time && game === Game.L1 ? lastPlayerTournamentDateTime : new Date().getTime();
+
     const chartData: ChartData[] = [
         ...players
             .flatMap(player => player.tourneyHistory
@@ -142,7 +149,7 @@ export const RatingGraph: FC<RatingGraphProps> = (props) => {
         ,
         ...players.map(player => ({
             ordinal: player.tourneyHistory.length,
-            time: new Date().getTime(),
+            time: lastTimePoint,
             ["rating-" + player.id]: player.glickoPlayer.rating,
             ["rank-" + player.id]: currentRank(player),
             label: "Now",
