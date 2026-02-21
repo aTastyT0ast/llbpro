@@ -1,4 +1,4 @@
-import {ReactElement, useEffect, useMemo, useState} from 'react'
+import React, {ReactElement, useEffect, useMemo, useState} from 'react'
 import {LeaderBoardEntry} from "@/domain/leaderboard.ts";
 import './LeaderBoardPage.css';
 import {getMaxBy, getMinBy, SortOrder} from "@/shared/math-utils.ts";
@@ -29,6 +29,7 @@ import {Switch} from "@/components/ui/switch.tsx";
 import {Label} from "@/components/ui/label.tsx";
 import {USD_PER_EURO} from "@/shared/prize-utils.ts";
 import {SITE_TITLE} from "@/shared/constants.ts";
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip.tsx";
 
 enum Sorter {
     NAME = "name",
@@ -277,7 +278,7 @@ function LeaderBoardPage() {
         const isNorthAmerican = entry.country === Country.NA;
 
         const countryFlag = entry.country && !isNorthAmerican
-            ? <LoadingImage src={getCountryFlag(entry.country)} className={"h-7 mr-1 absolute left-0"}/>
+            ? <img src={getCountryFlag(entry.country)} alt={entry.country} className={"h-7 mr-1 absolute left-0"}/>
             : isNorthAmerican
                 ? <div className={"text-xl blaze-font absolute left-0 max-lg:text-sm max-lg:top-1"}>NA</div>
                 : undefined;
@@ -467,7 +468,16 @@ function LeaderBoardPage() {
                                 const rank = showRelativeRank ? index + 1 : entry.rank;
                                 let playtime: string | ReactElement = "N/A";
                                 if (entry.playtime === 0) {
-                                    playtime = <EyeOff/>;
+                                    playtime = <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <EyeOff/>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>This user has marked their playtime as private on Steam</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>;
                                 } else if (entry.playtime) {
                                     const hours = Math.floor(entry.playtime / 60);
                                     const minutes = entry.playtime % 60;
