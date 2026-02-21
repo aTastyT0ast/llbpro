@@ -1,4 +1,4 @@
-import React, {ReactElement, useEffect, useMemo, useState} from 'react'
+import {ReactElement, useEffect, useMemo, useState} from 'react'
 import {LeaderBoardEntry} from "@/domain/leaderboard.ts";
 import './LeaderBoardPage.css';
 import {getMaxBy, getMinBy, SortOrder} from "@/shared/math-utils.ts";
@@ -8,7 +8,6 @@ import {LoadingSpinner} from "@/components/LoadingSpinner.tsx";
 import env from "@/assets/env.json";
 import {useCombiState} from "@/hooks/useCombiState.ts";
 import {usePlayerNavigation} from "@/hooks/usePlayerNavigation.ts";
-import {LoadingImage} from "@/components/LoadingImage.tsx";
 import {getCharacterIcon} from "@/shared/character-utils.ts";
 import {Country, getCountryFlag} from "@/domain/Country.ts";
 import {Belt, getBeltColor} from "@/domain/Belt.ts";
@@ -75,6 +74,7 @@ function LeaderBoardPage() {
     const [filteredContinents, setFilteredContinents] = useState<Continent[]>([]);
     const [filteredBelts, setFilteredBelts] = useState<Belt[]>([]);
     const [lastTourneyDaysFilter, setLastTourneyDaysFilter] = useState<number | null>(game === Game.Blaze ? DEFAULT_MAX_DAYS_SINCE_LAST_TOURNEY : null);
+    const [lastTourneyDaysInput, setLastTourneyDaysInput] = useState<string>(game === Game.Blaze ? String(DEFAULT_MAX_DAYS_SINCE_LAST_TOURNEY) : "");
     const [nameFilter, setNameFilter] = useState<string>("");
     const [minTourneyCount, setMinTourneyCount] = useState<number | null>(DEFAULT_MIN_TOURNEY_COUNT);
     const [showRelativeRank, setShowRelativeRank] = useState<boolean>(true);
@@ -99,9 +99,11 @@ function LeaderBoardPage() {
             setFilteredCharacters(filteredCharactersForGame);
         }
         if (game === Game.L1 && lastTourneyDaysFilter !== null) {
-            setLastTourneyDaysFilter(null)
+            setLastTourneyDaysFilter(null);
+            setLastTourneyDaysInput("");
         } else if (game === Game.Blaze && lastTourneyDaysFilter === null) {
             setLastTourneyDaysFilter(DEFAULT_MAX_DAYS_SINCE_LAST_TOURNEY);
+            setLastTourneyDaysInput(String(DEFAULT_MAX_DAYS_SINCE_LAST_TOURNEY));
         }
     }, [game])
 
@@ -254,7 +256,7 @@ function LeaderBoardPage() {
         .filter((entry) => filteredCharacters.length === 0 || entry.characters.some((char) => filteredCharacters.includes(char)))
         .filter((entry) => filteredContinents.length === 0 || entry.country && filteredContinents.includes(getContinentForCountry(entry.country)))
         .filter((entry) => game === Game.L1 || filteredBelts.length === 0 || entry.belt && filteredBelts.includes(entry.belt))
-        .filter((entry) => lastTourneyDaysFilter === null || entry.daysSinceLastTourney <= lastTourneyDaysFilter)
+        .filter((entry) => lastTourneyDaysFilter === null || (lastTourneyDaysFilter < 0 ? entry.daysSinceLastTourney > lastTourneyDaysFilter : entry.daysSinceLastTourney < lastTourneyDaysFilter))
         .filter((entry) => nameFilter === "" || entry.name.toLowerCase().includes(nameFilter.toLowerCase()))
         .filter((entry) => entry.tourneyCount >= (minTourneyCount || 1))
         .sort(sortFunction);
@@ -388,11 +390,13 @@ function LeaderBoardPage() {
         <DropdownMenuLabel>Days since last tourney</DropdownMenuLabel>
         <Input
             placeholder={"Enter days since last tourney"}
-            value={lastTourneyDaysFilter === null ? "" : lastTourneyDaysFilter}
+            value={lastTourneyDaysInput}
             onChange={
                 (e) => {
-                    const value = e.target.value;
-                    setLastTourneyDaysFilter(Number.isNaN(parseInt(value)) ? null : parseInt(value));
+                    const raw = e.target.value;
+                    setLastTourneyDaysInput(raw);
+                    const parsed = parseInt(raw);
+                    setLastTourneyDaysFilter(Number.isNaN(parsed) ? null : parsed);
                 }
             }/>
         <DropdownMenuLabel>Player Name</DropdownMenuLabel>
