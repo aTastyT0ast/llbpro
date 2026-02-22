@@ -9,7 +9,7 @@ import {FullPlayerData, Tourney, TourneyType} from "@/state/GlobalStateProvider.
 import {getRatingDiffClassName} from "@/shared/stat-utils.ts";
 import {usePlayerNavigation} from "@/hooks/usePlayerNavigation.ts";
 import {getTime} from "@/shared/date-utils.ts";
-import {Award, Coins, Crown, ExternalLink, Tag} from "lucide-react";
+import {Award, Coins, Crown, ExternalLink, Rose, Tag} from "lucide-react";
 import {getRatingUpdate} from "@/shared/math-utils.ts";
 import {PlacementBarChart} from "@/components/PlacementBarChart.tsx";
 import challongeIcon from "@/assets/challonge.svg";
@@ -20,7 +20,7 @@ import ytIcon from "@/assets/yt.png";
 import twitchIcon from "@/assets/twitch.png";
 import {Switch} from "@/components/ui/switch.tsx";
 import {Label} from "@/components/ui/label.tsx";
-import {getBeltColor} from "@/domain/Belt.ts";
+import {Belt, getBeltColor} from "@/domain/Belt.ts";
 import {SITE_TITLE} from "@/shared/constants.ts";
 
 export const TourneyPage: FC = () => {
@@ -175,7 +175,8 @@ export const TourneyPage: FC = () => {
                                     <TableHead>Rating</TableHead>
                                     <TableHead>ATR</TableHead>
                                     <TableHead>+/-</TableHead>
-                                    {tourney.prizepool && <TableHead className={"flex items-center justify-center"}><Coins/></TableHead>}
+                                    {tourney.prizepool &&
+                                        <TableHead className={"flex items-center justify-center"}><Coins/></TableHead>}
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -206,10 +207,12 @@ export const TourneyPage: FC = () => {
                                                     placementIcon = <Award color={"#cd7f32"}/>;
                                                 }
 
-                                                const belt = player.belt
-                                                    ? <Tag className={"h-7 absolute left-[-20px]"}
-                                                           color={getBeltColor(player.belt)}/>
-                                                    : undefined;
+                                                const belt = player.belt === Belt.LEGACY
+                                                    ? <Rose className={"h-7 absolute left-[-20px]"}
+                                                            color={"#c02828"}/> : player.belt
+                                                        ? <Tag className={"h-7 absolute left-[-20px]"}
+                                                               color={getBeltColor(player.belt)}/>
+                                                        : undefined;
 
                                                 let nameCell = <div className={"text-xl blaze-font"}>
                                                     {player.name}
@@ -241,7 +244,8 @@ export const TourneyPage: FC = () => {
                                                     <TableCell>{historyEntry.rating}</TableCell>
                                                     <TableCell
                                                         className={getRatingDiffClassName(diff)}>{diff}</TableCell>
-                                                    {tourney.prizepool && <TableCell>{tourney.prizepool.payouts[p.placement - 1] ? tourney.prizepool.payouts[p.placement - 1] + " " + tourney.prizepool.currency : ""}</TableCell>}
+                                                    {tourney.prizepool &&
+                                                        <TableCell>{tourney.prizepool.payouts[p.placement - 1] ? tourney.prizepool.payouts[p.placement - 1] + " " + tourney.prizepool.currency : ""}</TableCell>}
                                                 </TableRow>;
                                             }
                                         )

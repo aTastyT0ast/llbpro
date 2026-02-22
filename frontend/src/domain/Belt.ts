@@ -3,6 +3,7 @@ export enum Belt {
     GOLD = "gold",
     PINK = "pink",
     RED = "red",
+    LEGACY = "legacy",
     PURPLE = "purple",
     BLUE = "blue",
     GREEN = "green",
@@ -18,6 +19,7 @@ export const getBeltColor = (belt: Belt) => {
         case Belt.PINK:
             return "#ff5e9c";
         case Belt.RED:
+        case Belt.LEGACY:
             return "#c02828";
         case Belt.PURPLE:
             return "#b82ce4";

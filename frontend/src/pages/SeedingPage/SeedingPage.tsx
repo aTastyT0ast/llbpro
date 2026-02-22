@@ -17,7 +17,7 @@ import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/compon
 import {LoadingSpinner} from "@/components/LoadingSpinner.tsx";
 import {useCombiState} from "@/hooks/useCombiState.ts";
 import {useGameParams} from "@/hooks/useGameParams.ts";
-import {getBeltColor} from "@/domain/Belt.ts";
+import {Belt, getBeltColor} from "@/domain/Belt.ts";
 import {Checkbox} from "@/components/ui/checkbox.tsx";
 import {SITE_TITLE} from "@/shared/constants.ts";
 
@@ -303,10 +303,12 @@ export const SeedingPage: FC = () => {
                                             {seededPlayers && seededPlayers
                                                 .sort(sortFunction)
                                                 .map((participant, index) => {
-                                                    const belt = participant.belt
-                                                        ? <Tag className={"h-7 absolute left-[-32px] top-[-4px]"}
-                                                               color={getBeltColor(participant.belt)}/>
-                                                        : undefined;
+                                                    const belt = participant.belt === Belt.LEGACY
+                                                        ? <Rose className={"h-7 absolute left-[-32px] top-[-4px]"}
+                                                                color={"#c02828"}/> : participant.belt
+                                                            ? <Tag className={"h-7 absolute left-[-32px] top-[-4px]"}
+                                                                   color={getBeltColor(participant.belt)}/>
+                                                            : undefined;
 
                                                     let nameCell = <TableCell className={"blaze-font"}><a
                                                         href={`/${game}/players/${participant.id}`}

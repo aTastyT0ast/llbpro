@@ -7,8 +7,8 @@ import {ScrollArea, ScrollBar} from "@/components/ui/scroll-area.tsx";
 import {getCharacterImage} from "@/shared/character-utils.ts";
 import {LoadingImage} from "@/components/LoadingImage.tsx";
 import {Country, getCountryFlag} from "@/domain/Country.ts";
-import {Tag} from "lucide-react";
-import {getBeltColor} from "@/domain/Belt.ts";
+import {Rose, Tag} from "lucide-react";
+import {Belt, getBeltColor} from "@/domain/Belt.ts";
 
 interface PlayerProfileProps {
     player: Player,
@@ -62,9 +62,10 @@ export const PlayerProfile: FC<PlayerProfileProps> = (props) => {
         ? <LoadingImage src={getCountryFlag(player.country)} className={"h-7"}/>
         : isNorthAmerican ? <div className={"text-xl blaze-font"}>NA</div> : undefined;
 
-    const belt = player.belt ?
-        <Tag className={"h-7"} color={getBeltColor(player.belt)}/>
-        : undefined;
+    const belt = player.belt === Belt.LEGACY
+        ? <Rose className={"h-7"} color={"#c02828"}/> : player.belt
+            ? <Tag className={"h-7"} color={getBeltColor(player.belt)}/>
+            : undefined;
 
 
     return (

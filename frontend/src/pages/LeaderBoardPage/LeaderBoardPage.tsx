@@ -3,7 +3,7 @@ import {LeaderBoardEntry} from "@/domain/leaderboard.ts";
 import './LeaderBoardPage.css';
 import {getMaxBy, getMinBy, SortOrder} from "@/shared/math-utils.ts";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table.tsx";
-import {ArrowDown, ArrowUp, Columns2, EyeOff, Filter, Tag} from "lucide-react";
+import {ArrowDown, ArrowUp, Columns2, EyeOff, Filter, Rose, Tag} from "lucide-react";
 import {LoadingSpinner} from "@/components/LoadingSpinner.tsx";
 import env from "@/assets/env.json";
 import {useCombiState} from "@/hooks/useCombiState.ts";
@@ -256,7 +256,7 @@ function LeaderBoardPage() {
         .filter((entry) => filteredCharacters.length === 0 || entry.characters.some((char) => filteredCharacters.includes(char)))
         .filter((entry) => filteredContinents.length === 0 || entry.country && filteredContinents.includes(getContinentForCountry(entry.country)))
         .filter((entry) => game === Game.L1 || filteredBelts.length === 0 || entry.belt && filteredBelts.includes(entry.belt))
-        .filter((entry) => lastTourneyDaysFilter === null || (lastTourneyDaysFilter < 0 ? entry.daysSinceLastTourney > lastTourneyDaysFilter : entry.daysSinceLastTourney < lastTourneyDaysFilter))
+        .filter((entry) => lastTourneyDaysFilter === null || (lastTourneyDaysFilter < 0 ? entry.daysSinceLastTourney > Math.abs(lastTourneyDaysFilter) : entry.daysSinceLastTourney < lastTourneyDaysFilter))
         .filter((entry) => nameFilter === "" || entry.name.toLowerCase().includes(nameFilter.toLowerCase()))
         .filter((entry) => entry.tourneyCount >= (minTourneyCount || 1))
         .sort(sortFunction);
@@ -285,9 +285,10 @@ function LeaderBoardPage() {
                 ? <div className={"text-xl blaze-font absolute left-0 max-lg:text-sm max-lg:top-1"}>NA</div>
                 : undefined;
 
-        const belt = entry.belt
-            ? <Tag className={"h-7 mr-1 absolute left-12"} color={getBeltColor(entry.belt)}/>
-            : undefined;
+        const belt = entry.belt === Belt.LEGACY
+            ? <Rose className={"h-7 mr-1 absolute left-12"} color={"#c02828"}/> : entry.belt
+                ? <Tag className={"h-7 mr-1 absolute left-12"} color={getBeltColor(entry.belt)}/>
+                : undefined;
 
         const nameContent = <span>
             {entry.name}
@@ -380,11 +381,17 @@ function LeaderBoardPage() {
             <ToggleGroup type={"multiple"} value={filteredBelts} onValueChange={(values) => {
                 setFilteredBelts(values as Belt[])
             }}>
-                {Object.values(Belt).map((belt) => <ToggleGroupItem value={belt}
-                                                                    key={belt}
-                                                                    className={"w-16 h-16 text-accent-foreground"}>
-                    <Tag className={"h-7 mr-1 max-lg:w-4"} color={getBeltColor(belt)}/>
-                </ToggleGroupItem>)}
+                {Object.values(Belt).map((belt) => {
+                    const icon = belt === Belt.LEGACY ?
+                        <Rose className={"h-7 mr-1 max-lg:w-4"} color={"#c02828"}/> :
+                        <Tag className={"h-7 mr-1 max-lg:w-4"} color={getBeltColor(belt)}/>;
+                    return <ToggleGroupItem
+                        value={belt}
+                        key={belt}
+                        className={"w-16 h-16 text-accent-foreground"}>
+                        {icon}
+                    </ToggleGroupItem>;
+                })}
             </ToggleGroup>
         </>)}
         <DropdownMenuLabel>Days since last tourney</DropdownMenuLabel>
