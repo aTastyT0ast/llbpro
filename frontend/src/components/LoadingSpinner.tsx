@@ -55,15 +55,17 @@ export const LoadingSpinner = (props: LoadingSpinnerProps) => {
     useEffect(() => {
         const layers = ["bg", "fg_1", "fg_2", "fg_3", "fg_4", "mg"];
 
-        const randomColors: Record<string, string> = props.parryColors || {
+        let randomColors: Record<string, string> = props.parryColors || {
             bg: getRandomColor(),
             mg: getRandomColor(),
             fg_1: getRandomColor(),
             fg_4: getRandomColor(),
-        };
+        }
 
-        randomColors.fg_2 = interpolateColor(randomColors.fg_1, randomColors.fg_4, 1 / 3);
-        randomColors.fg_3 = interpolateColor(randomColors.fg_1, randomColors.fg_4, 2 / 3);
+        if (!props.parryColors) {
+            randomColors.fg_2 = interpolateColor(randomColors.fg_1, randomColors.fg_4, 1 / 3);
+            randomColors.fg_3 = interpolateColor(randomColors.fg_1, randomColors.fg_4, 2 / 3);
+        }
 
         tintColorsRef.current = [
             randomColors.bg,
@@ -183,5 +185,5 @@ export const LoadingSpinner = (props: LoadingSpinnerProps) => {
         };
     }, [props.parryColors]);
 
-    return <canvas ref={canvasRef} />;
+    return <canvas ref={canvasRef}/>;
 };

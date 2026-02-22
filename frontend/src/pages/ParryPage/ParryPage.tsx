@@ -20,6 +20,7 @@ import fg_frame_2 from "@/assets/parry/fg_frame_2.png";
 import fg_frame_3 from "@/assets/parry/fg_frame_3.png";
 import fg_frame_4 from "@/assets/parry/fg_frame_4.png";
 import {SITE_TITLE} from "@/shared/constants.ts";
+import {Checkbox} from "@/components/ui/checkbox.tsx";
 
 type FrameSources = {
     [key: string]: string[];
@@ -45,7 +46,7 @@ const interpolateColor = (color1: string, color2: string, factor: number): strin
     return `rgb(${r},${g},${b})`;
 };
 
-const getRandomColors = () => {
+const getRandomColors = (trueRandom: boolean) => {
     const colors = {
         bg: getRandomColor(),
         mg: getRandomColor(),
@@ -54,12 +55,26 @@ const getRandomColors = () => {
         fg_3: getRandomColor(),
         fg_4: getRandomColor(),
     };
-    colors.fg_2 = interpolateColor(colors.fg_1, colors.fg_4, 1 / 3);
-    colors.fg_3 = interpolateColor(colors.fg_1, colors.fg_4, 2 / 3);
+    if (!trueRandom) {
+        colors.fg_2 = interpolateColor(colors.fg_1, colors.fg_4, 1 / 3);
+        colors.fg_3 = interpolateColor(colors.fg_1, colors.fg_4, 2 / 3);
+    }
     return colors;
 };
 
 const layers = ["bg", "fg_1", "fg_2", "fg_3", "fg_4", "mg"];
+
+const rgbToHex = (rgb: string): string => {
+    const [r, g, b] = rgb.match(/\d+/g)!.map(Number);
+    return `#${[r, g, b].map(v => v.toString(16).padStart(2, "0")).join("")}`;
+};
+
+const getParryName = (colors: Record<string, string>) => {
+    const colorNames = Object.entries(colors).map(([key, value]) => {
+        return `${key.replace(/_/g, '')}-${rgbToHex(value).replace("#", "")}`;
+    });
+    return `parry_${colorNames.join("_")}`;
+}
 
 
 const addFrame = (gif: GIF, loadedFrames: Record<string, HTMLImageElement[]>, frameIndex: number, tintColors: string[]) => {
@@ -94,8 +109,9 @@ const addFrame = (gif: GIF, loadedFrames: Record<string, HTMLImageElement[]>, fr
 }
 
 export const ParryPage = () => {
-    const [parryColors, setParryColors] = useState<Record<string, string>>(getRandomColors());
     const [renderParry, setRenderParry] = useState(true);
+    const [trueRandom, setTrueRandom] = useState(false);
+    const [parryColors, setParryColors] = useState<Record<string, string>>(getRandomColors(trueRandom));
 
     useEffect(() => {
         document.title = `Parry - ${SITE_TITLE}`;
@@ -149,7 +165,7 @@ export const ParryPage = () => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = "animation.gif";
+            a.download = `${getParryName(parryColors)}.gif`;
             a.click();
             URL.revokeObjectURL(url);
         });
@@ -173,11 +189,17 @@ export const ParryPage = () => {
                 <CardContent className={"min-w-[400px] min-h-[705px]"}>
                     <BlazeButton label={"Reroll"} onClick={() => {
                         setRenderParry(false);
-                        setParryColors(getRandomColors());
+                        setParryColors(getRandomColors(trueRandom));
                         setTimeout(() => {
                             setRenderParry(true);
                         });
                     }}/>
+                    <div className={"flex gap-4 items-center"}><Checkbox
+                        checked={trueRandom}
+                        onCheckedChange={(checked) => setTrueRandom(!!checked)}/>
+                        <p>Use truly random colors</p>
+                    </div>
+
                     <div className={"h-4"}/>
                     <BlazeButton label={"Download GIF"} onClick={downloadGif}/>
                     <div className={"h-4"}/>
@@ -201,6 +223,7 @@ export const ParryPage = () => {
                                     <div key={key} className={"flex flex-col items-center"}>
                                         <p>{key}</p>
                                         <p>{value}</p>
+                                        <p>{rgbToHex(value)}</p>
                                     </div>
                                 );
                             })}
