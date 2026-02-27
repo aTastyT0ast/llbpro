@@ -31,11 +31,11 @@ export const roundedPercentage = (value) => {
 
 function shortenChallongeAvatarUrl(fullUrl) {
     if (fullUrl.startsWith("https://user-assets.challonge.com/users/images/")) {
-        return "1"+fullUrl.split("images/")[1];
+        return "1" + fullUrl.split("images/")[1];
     }
 
     if (fullUrl.startsWith("https://secure.gravatar.com/avatar/")) {
-        return "2"+fullUrl.split("?")[0].split("avatar/")[1];
+        return "2" + fullUrl.split("?")[0].split("avatar/")[1];
     }
 
     throw new Error("Unknown challonge avatar url format: " + fullUrl);
@@ -280,11 +280,11 @@ const optiCh = chTourneys.map(({tournament, ytVods, twitchVods, prizepool}) => {
             let groupSeed;
             const groupNumber = [...groupIds.values()].sort().indexOf(firstMatchInGroup.group_id) + 1;
             const firstMatchIndexInGroup = firstMatchInGroup.suggested_play_order !== null
-                    ? firstMatchInGroup.suggested_play_order - 1
-                    : getIndexForIdentifier(firstMatchInGroup.identifier);
-                const playerIndex = firstMatchInGroup.player1_id === groupPlayerId ? 0 : 1;
-                const groupSize = groupSizes.get(firstMatchInGroup.group_id);
-                groupSeed = roundRobinConfig[groupSize][firstMatchIndexInGroup].split("v")[playerIndex];
+                ? firstMatchInGroup.suggested_play_order - 1
+                : getIndexForIdentifier(firstMatchInGroup.identifier);
+            const playerIndex = firstMatchInGroup.player1_id === groupPlayerId ? 0 : 1;
+            const groupSize = groupSizes.get(firstMatchInGroup.group_id);
+            groupSeed = roundRobinConfig[groupSize][firstMatchIndexInGroup].split("v")[playerIndex];
 
             actualSeed = getGlobalSeedForPooledPlayer(groupSeed, groupIds.size, groupNumber);
         }
@@ -314,7 +314,7 @@ const optiCh = chTourneys.map(({tournament, ytVods, twitchVods, prizepool}) => {
         tourneyType,
         ytVods,
         twitchVods,
-        prizepool
+        null //prizepool
     ]
 });
 
@@ -363,7 +363,7 @@ const optiGG = ggTourneys.map((entry) => {
     const date = new Date(0);
     date.setUTCSeconds(startAt)
 
-    const correctLine = ggTourneysSourceLines.find((line)=> {
+    const correctLine = ggTourneysSourceLines.find((line) => {
         const [url] = line.split(',');
         const slugFromUrl = url.split("start.gg/")[1];
         return slugFromUrl === slug;
@@ -385,7 +385,7 @@ const optiGG = ggTourneys.map((entry) => {
         null,
         entry.ytVods,
         entry.twitchVods,
-        prizepool
+        null //prizepool
     ]
 });
 

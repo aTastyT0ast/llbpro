@@ -58,7 +58,7 @@ enum OptionalColumn {
     MATCH_COUNT = "Match #",
     MATCH_WINRATE = "Match Winrate",
     PLAYTIME = "Playtime",
-    WINNINGS = "Winnings",
+    // WINNINGS = "Winnings",
 }
 
 const DEFAULT_MIN_TOURNEY_COUNT = 5;
@@ -478,7 +478,7 @@ function LeaderBoardPage() {
                             {tableHeadCell(Sorter.MATCH_COUNT, OptionalColumn.MATCH_COUNT)}
                             {tableHeadCell(Sorter.MATCH_WINRATE, OptionalColumn.MATCH_WINRATE)}
                             {tableHeadCell(Sorter.PLAYTIME, OptionalColumn.PLAYTIME)}
-                            {tableHeadCell(Sorter.WINNINGS, OptionalColumn.WINNINGS)}
+                            {/*{tableHeadCell(Sorter.WINNINGS, OptionalColumn.WINNINGS)}*/}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -533,8 +533,8 @@ function LeaderBoardPage() {
                                             <TableCell>{entry.matchWinrate} %</TableCell>}
                                         {columns.includes(OptionalColumn.PLAYTIME) &&
                                             <TableCell className={"flex justify-center"}>{playtime}</TableCell>}
-                                        {columns.includes(OptionalColumn.WINNINGS) &&
-                                            <TableCell>{entry.winningsInUsd} $</TableCell>}
+                                        {/*{columns.includes(OptionalColumn.WINNINGS) &&*/}
+                                        {/*    <TableCell>{entry.winningsInUsd} $</TableCell>}*/}
                                     </TableRow>
                                 );
                             })}

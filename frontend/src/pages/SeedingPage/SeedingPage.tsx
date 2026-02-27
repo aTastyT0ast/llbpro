@@ -12,7 +12,7 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/c
 import {Input} from "@/components/ui/input.tsx";
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group.tsx";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
-import {ArrowDown, ArrowUp, CircleHelp, EyeOff, Tag, TriangleAlert} from "lucide-react";
+import {ArrowDown, ArrowUp, CircleHelp, EyeOff, Rose, Tag, TriangleAlert} from "lucide-react";
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip.tsx";
 import {LoadingSpinner} from "@/components/LoadingSpinner.tsx";
 import {useCombiState} from "@/hooks/useCombiState.ts";
