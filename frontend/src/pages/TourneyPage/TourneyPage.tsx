@@ -16,8 +16,6 @@ import challongeIcon from "@/assets/challonge.svg";
 import ggIcon from "@/assets/gg.svg";
 import {BracketPreview} from "@/components/BracketPreview.tsx";
 import {useGameParams} from "@/hooks/useGameParams.ts";
-import ytIcon from "@/assets/yt.png";
-import twitchIcon from "@/assets/twitch.png";
 import {Switch} from "@/components/ui/switch.tsx";
 import {Label} from "@/components/ui/label.tsx";
 import {Belt, getBeltColor} from "@/domain/Belt.ts";
@@ -113,45 +111,6 @@ export const TourneyPage: FC = () => {
                             <p>{tourney.participants.length} participants</p>
                             <p>URL: <a target={"_blank"} href={tourney.url}>{tourney.url}<ExternalLink
                                 className="ml-1 pb-1 inline"/></a></p>
-                            {
-                                (tourney.ytVods.length > 0 || tourney.twitchVods.length > 0) && (
-                                    <>
-                                        <p>VOD:</p>
-                                        <ul>
-                                            {tourney.ytVods.map((videoId) => {
-                                                let url = "https://youtu.be/" + videoId;
-                                                if (videoId.startsWith("list=")) {
-                                                    url = "https://youtube.com/playlist?" + videoId
-                                                }
-                                                return (
-                                                    <li key={videoId}>
-                                                        <img src={ytIcon} className={"inline mr-1"}/>
-                                                        <a target={"_blank"}
-                                                           href={url}>{url}<ExternalLink
-                                                            className="ml-1 pb-1 inline"/></a>
-                                                    </li>
-                                                );
-                                            })}
-                                            {tourney.twitchVods.map((videoId) => {
-                                                let url = "https://www.twitch.tv/videos/" + videoId;
-                                                if (!/^[0-9]+$/.test(videoId)) {
-                                                    url = "https://www.twitch.tv/collections/" + videoId
-                                                }
-                                                return (
-                                                    <li key={videoId}>
-                                                        <img src={twitchIcon} className={"inline mr-1"}/>
-                                                        <a target={"_blank"}
-                                                           href={url}>{url}<ExternalLink
-                                                            className="ml-1 pb-1 inline"/></a>
-                                                    </li>
-                                                );
-                                            })}
-                                        </ul>
-                                    </>
-
-                                )
-                            }
-
                         </CardContent>
                     </Card>
                     <Card>
@@ -256,6 +215,52 @@ export const TourneyPage: FC = () => {
                     <PlacementBarChart tourney={tourney} platform={platform}/>
                 </div>
                 <div className={"flex flex-col gap-5 w-[96vw] 2xl:w-[46vw]"}>
+                    {(tourney.ytVods.length > 0 || tourney.twitchVods.length > 0) &&
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>VODs</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <ul className={"list-disc list-inside"}>
+                                    {tourney.ytVods.map((videoId) => {
+                                        let url = "https://www.youtube.com/embed/" + videoId;
+                                        if (videoId.startsWith("list=")) {
+                                            url = "https://www.youtube.com/embed/videoseries?amp;" + videoId
+                                        }
+                                        return (
+                                            <div key={videoId}>
+                                                <iframe width="560"
+                                                        height="315"
+                                                        src={url}
+                                                        title="YouTube video player"
+                                                        frameBorder="0"
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                        referrerPolicy="strict-origin-when-cross-origin"
+                                                        allowFullScreen></iframe>
+                                            </div>
+                                        );
+                                    })}
+                                    {tourney.twitchVods.map((videoId) => {
+                                        let videoType = "video";
+                                        if (!/^[0-9]+$/.test(videoId)) {
+                                            videoType = "collection";
+                                        }
+                                        return (
+                                            <div key={videoId}>
+                                                <iframe
+                                                    src={`https://player.twitch.tv/?${videoType}=${videoId}&parent=llblaze.pro&autoplay=false`}
+                                                    width="560"
+                                                    height="315"
+                                                    allowFullScreen>
+                                                </iframe>
+                                            </div>
+                                        );
+                                    })}
+                                </ul>
+                            </CardContent>
+
+                        </Card>
+                    }
                     <Card>
                         <CardHeader>
                             <CardTitle>Matches ({matches?.length})</CardTitle>
