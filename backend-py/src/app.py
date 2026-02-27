@@ -6,6 +6,8 @@ import base64
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 import os
+import json
+import boto3
 
 app = FastAPI()
 
@@ -26,10 +28,15 @@ app.add_middleware(
 CHALLONGE_API_KEY = os.environ['CHALLONGE_API_KEY']
 CHALLONGE_USERNAME = os.environ['CHALLONGE_USERNAME']
 GG_API_KEY = os.environ['GG_API_KEY']
+TABLE_NAME = os.environ['TABLE_NAME']
+
+dynamodb = boto3.resource('dynamodb', region_name=os.environ.get('AWS_REGION', 'eu-central-1'))
+dynamo_table = dynamodb.Table(TABLE_NAME)
 
 
 @app.get("/challonge/tournaments/{tourney_id}/participants")
 async def get_challonge_participants(tourney_id: str):
+    print("challonge seeding called")
     if not tourney_id:
         raise HTTPException(status_code=400, detail="Missing tourney id")
 
@@ -70,6 +77,7 @@ client = Client(transport=transport)
 
 @app.get("/gg/tournament/{tourney_name}/event/{event_name}")
 async def get_gg_entrants(tourney_name: str, event_name: str):
+    print("gg seeding called")
     if not tourney_name:
         raise HTTPException(status_code=400, detail="Missing tourney name")
     if not event_name:
@@ -79,7 +87,6 @@ async def get_gg_entrants(tourney_name: str, event_name: str):
 
     print("slug", slug)
 
-    # Provide a GraphQL query
     query = gql(
         """
 query getEventId($slug: String) {
@@ -130,6 +137,28 @@ query getEventId($slug: String) {
         "tourneyName": tourney_name,
         "participants": participants
     }
+
+
+@app.get("/blaze/players")
+async def get_players_by_query_params(steam_id: str):
+    print("steam player lookup called")
+    if not steam_id:
+        raise HTTPException(status_code=400, detail="Missing steam id")
+
+    print("steam_id", steam_id)
+
+    response = dynamo_table.get_item(
+        Key={
+            "PK": f"STEAMID#{steam_id}",
+            "SK": "GAME#BLAZE",
+        }
+    )
+
+    item = response.get("Item")
+    if not item:
+        raise HTTPException(status_code=404, detail=f"No player found for steam id '{steam_id}'")
+
+    return json.loads(item["DATA"])
 
 
 handler = Mangum(app, lifespan="off")

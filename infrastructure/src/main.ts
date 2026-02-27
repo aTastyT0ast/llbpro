@@ -1,7 +1,8 @@
 import { App, Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { StaticSite } from './constructs/static-site';
-import {LLBProApi} from "./constructs/llb-pro-api";
+import { LLBProApi } from "./constructs/llb-pro-api";
+import { LLBProTable } from "./constructs/llb-pro-table";
 
 const app = new App();
 
@@ -16,12 +17,15 @@ export class LLBProStack extends Stack {
       certificateArn: process.env.SITE_CERTIFICATE_ARN || "",
     });
 
+    const { table } = new LLBProTable(this, 'llbpro-table');
+
     new LLBProApi(this, 'llbpro-api', {
       CHALLONGE_USERNAME: process.env.CHALLONGE_USERNAME || "",
       CHALLONGE_API_KEY: process.env.CHALLONGE_API_KEY || "",
       GG_API_KEY: process.env.GG_API_KEY || "",
       certificateArn: process.env.API_CERTIFICATE_ARN || "",
       domainName: domainName,
+      table,
     });
   }
 }
