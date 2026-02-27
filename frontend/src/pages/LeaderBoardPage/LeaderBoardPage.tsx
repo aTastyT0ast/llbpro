@@ -3,7 +3,7 @@ import {LeaderBoardEntry} from "@/domain/leaderboard.ts";
 import './LeaderBoardPage.css';
 import {getMaxBy, getMinBy, SortOrder} from "@/shared/math-utils.ts";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table.tsx";
-import {ArrowDown, ArrowUp, Columns2, EyeOff, Filter, Rose, Tag} from "lucide-react";
+import {ArrowDown, ArrowUp, CircleOff, Columns2, EyeOff, Filter, Rose, Tag} from "lucide-react";
 import {LoadingSpinner} from "@/components/LoadingSpinner.tsx";
 import env from "@/assets/env.json";
 import {useCombiState} from "@/hooks/useCombiState.ts";
@@ -72,7 +72,7 @@ function LeaderBoardPage() {
     const onPlayerClick = usePlayerNavigation();
     const [filteredCharacters, setFilteredCharacters] = useState<Character[]>([]);
     const [filteredContinents, setFilteredContinents] = useState<Continent[]>([]);
-    const [filteredBelts, setFilteredBelts] = useState<Belt[]>([]);
+    const [filteredBelts, setFilteredBelts] = useState<(Belt | null)[]>([]);
     const [lastTourneyDaysFilter, setLastTourneyDaysFilter] = useState<number | null>(game === Game.Blaze ? DEFAULT_MAX_DAYS_SINCE_LAST_TOURNEY : null);
     const [lastTourneyDaysInput, setLastTourneyDaysInput] = useState<string>(game === Game.Blaze ? String(DEFAULT_MAX_DAYS_SINCE_LAST_TOURNEY) : "");
     const [nameFilter, setNameFilter] = useState<string>("");
@@ -255,7 +255,7 @@ function LeaderBoardPage() {
         .filter(entry => entry.tourneyCount > 1)
         .filter((entry) => filteredCharacters.length === 0 || entry.characters.some((char) => filteredCharacters.includes(char)))
         .filter((entry) => filteredContinents.length === 0 || entry.country && filteredContinents.includes(getContinentForCountry(entry.country)))
-        .filter((entry) => game === Game.L1 || filteredBelts.length === 0 || entry.belt && filteredBelts.includes(entry.belt))
+        .filter((entry) => game === Game.L1 || filteredBelts.length === 0 || (entry.belt && filteredBelts.includes(entry.belt)) || (!entry.belt && filteredBelts.includes(null)))
         .filter((entry) => lastTourneyDaysFilter === null || (lastTourneyDaysFilter < 0 ? entry.daysSinceLastTourney > Math.abs(lastTourneyDaysFilter) : entry.daysSinceLastTourney < lastTourneyDaysFilter))
         .filter((entry) => nameFilter === "" || entry.name.toLowerCase().includes(nameFilter.toLowerCase()))
         .filter((entry) => entry.tourneyCount >= (minTourneyCount || 1))
@@ -378,8 +378,11 @@ function LeaderBoardPage() {
         {game === Game.Blaze && (<>
             <DropdownMenuLabel>Belt</DropdownMenuLabel>
             <DropdownMenuSeparator/>
-            <ToggleGroup type={"multiple"} value={filteredBelts} onValueChange={(values) => {
-                setFilteredBelts(values as Belt[])
+            <ToggleGroup type={"multiple"} value={filteredBelts.map(
+                belt => belt === null ? "null" : belt
+            )} onValueChange={(values) => {
+                const mappedBelts = values.map(v => v === "null" ? null : v);
+                setFilteredBelts(mappedBelts as (Belt | null)[])
             }}>
                 {Object.values(Belt).map((belt) => {
                     const icon = belt === Belt.LEGACY ?
@@ -392,6 +395,11 @@ function LeaderBoardPage() {
                         {icon}
                     </ToggleGroupItem>;
                 })}
+                <ToggleGroupItem
+                    value={"null"}
+                    className={"w-16 h-16 text-accent-foreground"}>
+                    <CircleOff className={"h-7 mr-1 max-lg:w-4"} color={"white"}/>
+                </ToggleGroupItem>
             </ToggleGroup>
         </>)}
         <DropdownMenuLabel>Days since last tourney</DropdownMenuLabel>
