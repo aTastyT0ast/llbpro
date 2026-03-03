@@ -31,7 +31,6 @@ import {SITE_TITLE} from "@/shared/constants.ts";
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip.tsx";
 
 enum Sorter {
-    NAME = "name",
     RATING = "rating",
     RATING_LB_95 = "rating_lb_95",
     DEVIATION = "deviation",
@@ -118,7 +117,7 @@ function LeaderBoardPage() {
             .sort((a, b) => (b.glickoStats.rating - 2 * b.glickoStats.deviation) - (a.glickoStats.rating - 2 * a.glickoStats.deviation));
 
         return correctMapping.map((player) => {
-            const currentRank = sortedRanking.findIndex(p => p.id === player.id) + 1;
+            const currentRank = sortedRanking.findIndex(p => p.playerId === player.playerId) + 1;
             const peakRank = player.glickoHistory.length > DEFAULT_MIN_TOURNEY_COUNT
                 ? getMinBy(player.glickoHistory.filter(entry => entry.rank), "rank").rank
                 : currentRank;
@@ -135,19 +134,19 @@ function LeaderBoardPage() {
 
             const daysSinceLastTourney = Math.floor((new Date().getTime() - theirLastTourney.tourney.date.getTime()) / (1000 * 60 * 60 * 24));
             const theirMatches = (rankedMatches ?? []).flatMap(tourney =>
-                tourney.matches.filter(match => match.player1 === player.id || match.player2 === player.id)
+                tourney.matches.filter(match => match.player1 === player.playerId || match.player2 === player.playerId)
             );
             const matchCount = theirMatches.length;
             const matchWins = theirMatches.filter(match =>
-                (match.player1 === player.id && match.hasPlayer1Won) ||
-                (match.player2 === player.id && !match.hasPlayer1Won)
+                (match.player1 === player.playerId && match.hasPlayer1Won) ||
+                (match.player2 === player.playerId && !match.hasPlayer1Won)
             ).length;
 
             const winningsInUsd = tourneys
                 .filter(tourney => tourney.prizepool)
-                .filter(tourney => tourney.participants.some(p => p.playerId === player.id))
+                .filter(tourney => tourney.participants.some(p => p.playerId === player.playerId))
                 .reduce((sum, tourney) => {
-                    const placement = tourney.participants.find(p => p.playerId === player.id)!.placement;
+                    const placement = tourney.participants.find(p => p.playerId === player.playerId)!.placement;
                     const payout = tourney.prizepool!.payouts[placement - 1];
                     if (payout) {
                         if (tourney.prizepool!.currency === Currency.USD) {
@@ -159,7 +158,7 @@ function LeaderBoardPage() {
                 }, 0);
 
             return {
-                id: player.id,
+                surrogateId: player.surrogateId,
                 name: player.name,
                 rating: player.glickoStats.rating,
                 deviation: player.glickoStats.deviation,
@@ -189,8 +188,6 @@ function LeaderBoardPage() {
         const sortOrderFactor = sortOrder === SortOrder.DESC ? 1 : -1;
 
         switch (currentSorter) {
-            case Sorter.NAME:
-                return sortOrderFactor * a.name.localeCompare(b.name);
             case Sorter.RATING:
                 return sortOrderFactor * (b.rating - a.rating);
             case Sorter.RATING_LB_95:
@@ -467,7 +464,7 @@ function LeaderBoardPage() {
                         <TableRow>
                             <TableHead>Rank</TableHead>
                             {tableHeadCell(Sorter.PEAK_RANK, OptionalColumn.PEAK_RANK)}
-                            {tableHeadCell(Sorter.NAME, "Name")}
+                            <TableHead>Name</TableHead>
                             {tableHeadCell(Sorter.RATING_LB_95, OptionalColumn.RATING_LB_95)}
                             {tableHeadCell(Sorter.RATING, OptionalColumn.RATING)}
                             {tableHeadCell(Sorter.PEAK_RATING, OptionalColumn.PEAK_RATING)}
@@ -511,7 +508,7 @@ function LeaderBoardPage() {
                                         {rankCell(entry, rank)}
                                         {columns.includes(OptionalColumn.PEAK_RANK) &&
                                             <TableCell>{entry.peakRank}</TableCell>}
-                                        <TableCell onClick={onPlayerClick(entry.id)}
+                                        <TableCell onClick={onPlayerClick(entry.surrogateId)}
                                                    className={"cursor-pointer hover-highlight min-w-[400px]"}>{nameCell(entry)}</TableCell>
                                         {columns.includes(OptionalColumn.RATING_LB_95) &&
                                             <TableCell>{entry.rating - 2 * entry.deviation}</TableCell>}

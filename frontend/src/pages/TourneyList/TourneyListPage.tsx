@@ -113,7 +113,7 @@ export const TourneyListPage: FC = () => {
     const filteredTourneys = tourneys
         .map(tourney => {
             const winnerId = tourney.participants.find(p => p.placement === 1)?.playerId;
-            const winner = correctMapping.find(p => p.id === winnerId);
+            const winner = correctMapping.find(p => p.playerId === winnerId);
             return ({
                 ...tourney,
                 winner,

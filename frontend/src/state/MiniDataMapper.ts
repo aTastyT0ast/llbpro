@@ -1,4 +1,15 @@
-import {Character, Currency, FullMatchData, FullPlayerData, PrizePool, Tourney} from "./GlobalStateProvider.tsx";
+import {
+    Character,
+    Currency,
+    FullMatchData,
+    FullPlayerData,
+    ParticipantId,
+    PlayerId,
+    PrizePool,
+    SurrogateId,
+    Tourney,
+    TourneyId
+} from "./GlobalStateProvider.tsx";
 import {Platform} from "../domain/Player.ts";
 import {Country} from "@/domain/Country.ts";
 import {Belt} from "@/domain/Belt.ts";
@@ -47,18 +58,20 @@ export type MiniPlayerData = [
     [main: string, secondary: string],
     country: string,
     belt: string,
-    playtime: number
+    playtime: number,
+    surrogateId: number
 ]
 
 export const mapMiniPlayerData = (mini: MiniPlayerData): FullPlayerData => {
-    const [id, name, challonge, gg, stats, history, characters, country, belt, playtime] = mini;
+    const [id, name, challonge, gg, stats, history, characters, country, belt, playtime, surrogateId] = mini;
     const [chAccounts, chParticipations] = challonge;
     const [ggAccounts, ggEntrants] = gg;
     const [currentRating, currentDev, currentVol] = stats;
     const [main, secondary] = characters;
 
     const full: FullPlayerData = {
-        id: convertBase64ToBase10(id),
+        playerId: convertBase64ToBase10(id) as PlayerId,
+        surrogateId: surrogateId as SurrogateId,
         name: name,
         challonge: {
             accounts: chAccounts.map(([id, username, url]) => ({
@@ -66,7 +79,7 @@ export const mapMiniPlayerData = (mini: MiniPlayerData): FullPlayerData => {
                 challongeUsername: username,
                 avatarUrl: parseChallongeAvatar(url)
             })),
-            participations: chParticipations.map(convertBase64ToBase10)
+            participations: chParticipations.map(convertBase64ToBase10).map(p => p as ParticipantId)
         },
         gg: {
             accounts: ggAccounts.map(([id, tag, discriminator, url]) => ({
@@ -96,7 +109,7 @@ export const mapMiniPlayerData = (mini: MiniPlayerData): FullPlayerData => {
 
             return {
                 tourney: {
-                    id: convertBase64ToBase10(tourneyId),
+                    id: convertBase64ToBase10(tourneyId) as TourneyId,
                     platform: platform,
                     date: new Date(convertBase64ToBase10(date))
                 },
@@ -146,12 +159,12 @@ export const mapMiniMatchData = (mini: MiniMatchData): FullMatchData => {
     const full = {
         tourney: {
             date: new Date(convertBase64ToBase10(date)),
-            id: convertBase64ToBase10(tourneyId),
+            id: convertBase64ToBase10(tourneyId) as TourneyId,
             platform
         },
         matches: matches.map(([player1, player2, roundedPercentage, hasPlayer1Won, date]) => ({
-            player1: player1,
-            player2: player2,
+            player1: player1 as PlayerId,
+            player2: player2 as PlayerId,
             player1Prediction: roundedPercentage,
             hasPlayer1Won: hasPlayer1Won === 1,
             date: new Date(convertBase64ToBase10(date))
@@ -181,14 +194,14 @@ export const mapMiniTourney = (platform: Platform) => (mini: MiniTourney): Tourn
     const [id, name, url, date, participants, tourneyType, ytVods, twitchVods, prizepool] = mini;
 
     const full: Tourney = {
-        id: convertBase64ToBase10(id),
+        id: convertBase64ToBase10(id) as TourneyId,
         name: name,
         url: url,
         platform: platform,
         date: new Date(convertBase64ToBase10(date)),
         participants: participants.map(([participantId, playerId, name, placement, seed]) => ({
-            participantId: participantId,
-            playerId: playerId,
+            participantId: participantId as ParticipantId,
+            playerId: playerId as PlayerId,
             name: name,
             placement: placement,
             seed: seed

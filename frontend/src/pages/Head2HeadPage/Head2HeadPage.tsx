@@ -18,9 +18,12 @@ import {Platform} from "@/domain/Player.ts";
 import {getDateString} from "@/shared/date-utils.ts";
 import {useLocation} from "react-router-dom";
 import {SITE_TITLE} from "@/shared/constants.ts";
+import {PlayerId, SurrogateId, TourneyId} from "@/state/GlobalStateProvider.tsx";
+import {useSurrogateId} from "@/hooks/useSurrogateId.ts";
 
 export interface Head2HeadPlayer {
-    id: number;
+    surrogateId: SurrogateId;
+    playerId: PlayerId;
     name: string;
 }
 
@@ -29,21 +32,21 @@ interface Head2HeadStats {
     matchHistory: {
         tourney: {
             platform: Platform,
-            id: number,
+            id: TourneyId,
             name: string,
             date: Date
         },
         matches: {
-            player1: number,
-            player2: number,
+            player1: PlayerId,
+            player2: PlayerId,
             hasPlayer1Won: boolean
         }[]
     }[]
 }
 
 interface Comparison {
-    player1: number,
-    player2: number,
+    player1SId: SurrogateId,
+    player2SId: SurrogateId,
     prediction: number,
     standing: [wins: number, losses: number],
     p1Wager: [win: number, loss: number],
@@ -59,34 +62,35 @@ enum DisplayedStat {
 export const Head2HeadPage: FC = () => {
     const {correctMapping, rankedMatches, tourneys} = useCombiState();
     const game = useGameParams();
-    const getTargetPlayerId = useCrossPlayer();
+    const isCrossPlayer = useCrossPlayer();
     const onPlayerClick = usePlayerNavigation();
     const onTourneyClick = useTourneyNavigation();
+    const getSurrogateId = useSurrogateId();
     const location = useLocation();
-    const playerIdsParams = new URLSearchParams(location.search).get('playerIds');
-    const playerIds = playerIdsParams?.split(",").map(id => parseInt(id)).filter(id => !isNaN(id)) ?? [];
 
-    let initiallySelectedPlayerIds: (number | undefined)[] = [undefined, undefined];
-    if (playerIds.length > 0) {
-        initiallySelectedPlayerIds = playerIds;
+    const playerIdsParams = new URLSearchParams(location.search).get('playerIds');
+    const surrogateIds = playerIdsParams?.split(",").map(id => parseInt(id) as SurrogateId).filter(id => !isNaN(id)) ?? [];
+
+    let initiallySelectedSIds: (SurrogateId | undefined)[] = [undefined, undefined];
+    if (surrogateIds.length > 0) {
+        initiallySelectedSIds = surrogateIds;
     }
-    const [selectedPlayerIds, setSelectedPlayerIds] = useState<(number | undefined)[]>(initiallySelectedPlayerIds);
+    const [selectedSIds, setSelectedSIds] = useState<(SurrogateId | undefined)[]>(initiallySelectedSIds);
     const [displayedStat, setDisplayedStat] = useState<DisplayedStat>(DisplayedStat.STANDING);
 
     useEffect(() => {
         document.title = `H2H - ${SITE_TITLE}`;
     }, []);
 
-    // TODO: think of a better way to handle this
     useEffect(() => {
-        if (playerIds.length > 0) {
+        if (surrogateIds.length > 0) {
             return;
         }
-        setSelectedPlayerIds(prevSelectedPlayerIds => prevSelectedPlayerIds.map(playerId => {
-            if (playerId === undefined) {
+        setSelectedSIds(prevSelectedSIds => prevSelectedSIds.map(surrogateId => {
+            if (surrogateId === undefined || !isCrossPlayer(surrogateId)) {
                 return undefined;
             }
-            return getTargetPlayerId(playerId, game);
+            return surrogateId;
         }));
     }, [game]);
 
@@ -95,21 +99,21 @@ export const Head2HeadPage: FC = () => {
     }
 
     const allPlayers: Head2HeadPlayer[] = correctMapping.map(player => ({
-        id: player.id,
+        surrogateId: player.surrogateId,
+        playerId: player.playerId,
         name: player.name
     }));
 
-
-    const onPlayerSelect = (id: number, index: number) => {
-        setSelectedPlayerIds(prev => {
+    const onPlayerSelect = (id: SurrogateId, index: number) => {
+        setSelectedSIds(prev => {
             const newPlayers = [...prev];
             newPlayers[index] = id;
             return newPlayers;
         });
     };
 
-    const fullSelectedPlayers = selectedPlayerIds
-        .map(playerId => correctMapping.find(p => p.id === playerId))
+    const fullSelectedPlayers = selectedSIds
+        .map(playerId => correctMapping.find(p => p.surrogateId === playerId))
         .flatMap(player => player ? [player] : []);
 
     const permutations = generatePairsPermutations(fullSelectedPlayers);
@@ -119,18 +123,18 @@ export const Head2HeadPage: FC = () => {
             const p1Matches = rankedMatches
                 .flatMap(match => match.matches)
                 .filter(m =>
-                    (m.player1 === p1.id || m.player2 === p1.id) &&
-                    (m.player1 === p2.id || m.player2 === p2.id)
+                    (m.player1 === p1.playerId || m.player2 === p1.playerId) &&
+                    (m.player1 === p2.playerId || m.player2 === p2.playerId)
                 );
 
             const wins = p1Matches.filter(m =>
-                m.hasPlayer1Won && m.player1 === p1.id || !m.hasPlayer1Won && m.player2 === p1.id
+                m.hasPlayer1Won && m.player1 === p1.playerId || !m.hasPlayer1Won && m.player2 === p1.playerId
             ).length;
             const losses = p1Matches.length - wins;
 
             return ({
-                player1: p1.id,
-                player2: p2.id,
+                player1SId: p1.surrogateId,
+                player2SId: p2.surrogateId,
                 prediction: predict(p1.glickoStats, p2.glickoStats),
                 standing: [wins, losses],
                 p1Wager: [getRatingUpdate(p1.glickoStats, p2.glickoStats, true), getRatingUpdate(p1.glickoStats, p2.glickoStats, false)],
@@ -139,7 +143,7 @@ export const Head2HeadPage: FC = () => {
         }),
         matchHistory: rankedMatches
             .filter((tourney) => tourney.matches
-                .some(match => selectedPlayerIds.includes(match.player1) && selectedPlayerIds.includes(match.player2))
+                .some(match => selectedSIds.includes(getSurrogateId(match.player1)) && selectedSIds.includes(getSurrogateId(match.player2)))
             )
             .sort((a, b) => b.tourney.date.getTime() - a.tourney.date.getTime())
             .map(tourney => ({
@@ -150,18 +154,18 @@ export const Head2HeadPage: FC = () => {
                     date: tourney.tourney.date
                 },
                 matches: tourney.matches
-                    .filter(match => selectedPlayerIds.includes(match.player1) && selectedPlayerIds.includes(match.player2))
+                    .filter(match => selectedSIds.includes(getSurrogateId(match.player1)) && selectedSIds.includes(getSurrogateId(match.player2)))
             }))
     }
 
-    const statsUniquePlayers = stats?.comparisons.reduce((acc: number[], prediction) => {
-            if (!acc.includes(prediction.player1)) {
-                acc.push(prediction.player1);
+    const statsUniquePlayers = stats?.comparisons.reduce((acc: SurrogateId[], prediction) => {
+            if (!acc.includes(prediction.player1SId)) {
+                acc.push(prediction.player1SId);
             }
             return acc;
         }, [])
             .map(playerId =>
-                allPlayers.find(p => p.id === playerId)
+                allPlayers.find(p => p.surrogateId === playerId)
             )
             .flatMap(player => player ? [player] : [])
         || [];
@@ -176,22 +180,22 @@ export const Head2HeadPage: FC = () => {
                     </CardHeader>
                     <CardContent className={"flex flex-col w-fit"}>
                         {
-                            selectedPlayerIds.map((_, index) =>
+                            selectedSIds.map((_, index) =>
                                 <PlayerAutoComplete
                                     key={index}
                                     allPlayers={allPlayers}
-                                    playerId={selectedPlayerIds[index]}
+                                    surrogateId={selectedSIds[index]}
                                     onChange={(id) => onPlayerSelect(id, index)}/>
                             )
                         }
                         <div className={"flex gap-2"}>
-                            <Button size={"icon"} onClick={() => setSelectedPlayerIds(prev => [...prev, undefined])}>
+                            <Button size={"icon"} onClick={() => setSelectedSIds(prev => [...prev, undefined])}>
                                 <Plus className={"h-4 w-4"}></Plus>
                             </Button>
                             <Button
                                 size={"icon"}
-                                onClick={() => setSelectedPlayerIds(prev => prev.slice(0, prev.length - 1))}
-                                disabled={selectedPlayerIds.length <= 2}
+                                onClick={() => setSelectedSIds(prev => prev.slice(0, prev.length - 1))}
+                                disabled={selectedSIds.length <= 2}
                             >
                                 <Minus className={"h-4 w-4"}></Minus>
                             </Button>
@@ -232,9 +236,9 @@ export const Head2HeadPage: FC = () => {
                                                 <TableHead>Player \ Opponent</TableHead>
                                                 {
                                                     statsUniquePlayers.map((player) =>
-                                                        <TableHead key={player.id}
+                                                        <TableHead key={player.playerId}
                                                                    className={"cursor-pointer hover-highlight blaze-font"}
-                                                                   onClick={onPlayerClick(player.id)}>{player.name}</TableHead>
+                                                                   onClick={onPlayerClick(player.surrogateId)}>{player.name}</TableHead>
                                                     )
                                                 }
                                             </TableRow>
@@ -244,16 +248,16 @@ export const Head2HeadPage: FC = () => {
                                                 statsUniquePlayers.map((player, index) =>
                                                     <TableRow key={index}>
                                                         <TableHead className={"cursor-pointer hover-highlight blaze-font"}
-                                                                   onClick={onPlayerClick(player.id)}>{player.name}</TableHead>
+                                                                   onClick={onPlayerClick(player.surrogateId)}>{player.name}</TableHead>
                                                         {
-                                                            selectedPlayerIds
+                                                            selectedSIds
                                                                 .flatMap(id => id !== undefined ? [id] : [])
                                                                 .map((opponentPlayer, otherIndex) => {
                                                                         if (index === otherIndex) {
                                                                             return <TableCell key={otherIndex}>-</TableCell>;
                                                                         }
                                                                         const comparison = stats.comparisons.find(comparison =>
-                                                                            comparison.player1 === player.id && comparison.player2 === opponentPlayer
+                                                                            comparison.player1SId === player.surrogateId && comparison.player2SId === opponentPlayer
                                                                         );
 
                                                                         switch (displayedStat) {
@@ -279,7 +283,7 @@ export const Head2HeadPage: FC = () => {
                             </Card>
 
                             <RatingGraph title={"Rating Comparison"}
-                                         playerIds={selectedPlayerIds.flatMap(id => id !== undefined ? [id] : [])}/>
+                                         surrogateIds={selectedSIds.flatMap(id => id !== undefined ? [id] : [])}/>
 
                             {
                                 stats.matchHistory.length > 0 && (
@@ -306,15 +310,15 @@ export const Head2HeadPage: FC = () => {
                                                         <TableBody>
                                                             {
                                                                 entry.matches.map((match, index) => {
-                                                                    const p1 = allPlayers.find(p => p.id === match.player1);
-                                                                    const p2 = allPlayers.find(p => p.id === match.player2);
+                                                                    const p1 = allPlayers.find(p => p.playerId === match.player1);
+                                                                    const p2 = allPlayers.find(p => p.playerId === match.player2);
                                                                     // sort by the same order in the selectedPlayerIds
-                                                                    const player1Index = selectedPlayerIds
+                                                                    const player1Index = selectedSIds
                                                                         .flatMap(id => id !== undefined ? [id] : [])
-                                                                        .indexOf(match.player1);
-                                                                    const player2Index = selectedPlayerIds
+                                                                        .indexOf(getSurrogateId(match.player1));
+                                                                    const player2Index = selectedSIds
                                                                         .flatMap(id => id !== undefined ? [id] : [])
-                                                                        .indexOf(match.player2);
+                                                                        .indexOf(getSurrogateId(match.player2));
                                                                     if (player1Index === -1 || player2Index === -1) {
                                                                         return null;
                                                                     }

@@ -66,7 +66,7 @@ export const PlacementBarChart: FC<PlacementBarChartProps> = (props) => {
     const chartData: ChartData[] = tourney.participants
         .sort(sortByXScale)
         .map(p => {
-                const player: FullPlayerData = correctMapping.find(player => player.id === p.playerId)!;
+                const player: FullPlayerData = correctMapping.find(player => player.playerId === p.playerId)!;
                 const historyEntry = player.glickoHistory.find(h => h.tourney.id === tourney.id && h.tourney.platform === platform)!;
                 const nthTourney = player.glickoHistory.indexOf(historyEntry);
                 const diff = nthTourney === player.glickoHistory.length - 1

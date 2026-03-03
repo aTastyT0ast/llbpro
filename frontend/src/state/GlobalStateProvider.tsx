@@ -154,11 +154,12 @@ export enum Character {
 }
 
 export interface FullPlayerData {
-    id: number,
+    playerId: PlayerId,
+    surrogateId: SurrogateId,
     name: string,
     challonge: {
         accounts: ChallongeAccount[],
-        participations: number[]
+        participations: ParticipantId[]
     },
     gg: {
         accounts: GGAccount[],
@@ -181,7 +182,7 @@ export interface FullPlayerData {
 export interface GlickoHistoryEntry extends GlickoStats {
     tourney: {
         platform: Platform,
-        id: number,
+        id: TourneyId,
         date: Date,
     }
     rank: number
@@ -190,12 +191,12 @@ export interface GlickoHistoryEntry extends GlickoStats {
 export interface FullMatchData {
     tourney: {
         date: Date,
-        id: number,
+        id: TourneyId,
         platform: Platform
     }
     matches: {
-        player1: number,
-        player2: number,
+        player1: PlayerId,
+        player2: PlayerId,
         player1Prediction: number,
         hasPlayer1Won: boolean,
         date: Date
@@ -209,7 +210,7 @@ export enum TourneyType {
 }
 
 export interface Tourney {
-    id: number,
+    id: TourneyId,
     name: string,
     url: string,
     platform: Platform,
@@ -234,9 +235,14 @@ export enum Currency {
 }
 
 export interface TourneyParticipant {
-    participantId: number,
-    playerId: number,
+    participantId: ParticipantId,
+    playerId: PlayerId,
     name: string,
     placement: number,
     seed: number,
 }
+
+export type SurrogateId = number & { readonly __brand: "SurrogateId" };
+export type PlayerId = number & { readonly __brand: "PlayerId" };
+export type TourneyId = number & { readonly __brand: "TourneyId" };
+export type ParticipantId = number & { readonly __brand: "ParticipantId" };

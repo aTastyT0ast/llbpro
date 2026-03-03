@@ -1,11 +1,12 @@
 import {ChallongeInfo} from "./challonge.ts";
 import {GGInfo} from "./gg.ts";
-import {Character} from "@/state/GlobalStateProvider.tsx";
+import {Character, PlayerId, SurrogateId, TourneyId} from "@/state/GlobalStateProvider.tsx";
 import {Country} from "@/domain/Country.ts";
 import {Belt} from "@/domain/Belt.ts";
 
 export interface Player {
-    id: number,
+    playerId: PlayerId,
+    surrogateId: SurrogateId,
     displayName: string
     challonge: ChallongeInfo
     gg: GGInfo
@@ -35,7 +36,7 @@ export enum Platform {
 export interface TourneyParticipation {
     platform: Platform,
     tourney: {
-        id: number
+        id: TourneyId
         url: string,
         name: string,
         hasVod: boolean,
@@ -52,7 +53,7 @@ export interface TourneyParticipation {
 export interface GlickoSnapshot extends GlickoStats {
     tourney: {
         platform: Platform,
-        id: number,
+        id: TourneyId,
         date: string
     }
 }
@@ -62,7 +63,7 @@ export interface MatchHistoryEntry {
         name: string,
         url: string,
         date: string,
-        id: number
+        id: TourneyId
         platform: Platform
     },
     matches: Match[]
@@ -70,7 +71,8 @@ export interface MatchHistoryEntry {
 
 export interface Match {
     opponent: {
-        playerId: number,
+        playerId: PlayerId,
+        surrogateId: SurrogateId,
         displayName: string,
     },
     prediction: number,

@@ -8,15 +8,16 @@ import {Command, CommandEmpty, CommandInput, CommandItem, CommandList,} from "@/
 import {Popover, PopoverContent, PopoverTrigger,} from "@/components/ui/popover"
 import {Head2HeadPlayer} from "@/pages/Head2HeadPage/Head2HeadPage.tsx";
 import {FixedSizeList, ListChildComponentProps} from "react-window";
+import {SurrogateId} from "@/state/GlobalStateProvider.tsx";
 
 export interface PlayerAutoCompleteProps {
     allPlayers: Head2HeadPlayer[]
-    playerId: number | undefined
-    onChange: (value: number) => void
+    surrogateId: SurrogateId | undefined
+    onChange: (value: SurrogateId) => void
 }
 
 export const PlayerAutoComplete: FC<PlayerAutoCompleteProps> = (props) => {
-    const {allPlayers, playerId, onChange} = props
+    const {allPlayers, surrogateId, onChange} = props
     const [open, setOpen] = React.useState(false)
     const [searchTerm, setSearchTerm] = useState<string>("")
 
@@ -30,17 +31,17 @@ export const PlayerAutoComplete: FC<PlayerAutoCompleteProps> = (props) => {
             <div style={style}>
                 <CommandItem
                     className={"text-lg"}
-                    key={player.id}
-                    value={player.id.toString()}
+                    key={player.surrogateId}
+                    value={player.surrogateId.toString()}
                     onSelect={(currentValue) => {
-                        onChange(Number.parseInt(currentValue))
+                        onChange(Number.parseInt(currentValue) as SurrogateId)
                         setOpen(false)
                     }}
                 >
                     <Check
                         className={cn(
                             "mr-2 h-4 w-4",
-                            playerId === player.id ? "opacity-100" : "opacity-0"
+                            surrogateId === player.surrogateId ? "opacity-100" : "opacity-0"
                         )}
                     />
                     {player.name}
@@ -58,15 +59,16 @@ export const PlayerAutoComplete: FC<PlayerAutoCompleteProps> = (props) => {
                     aria-expanded={open}
                     className="w-[250px] justify-between mb-2 text-lg"
                 >
-                    {playerId !== undefined
-                        ? allPlayers.find((player) => player.id === playerId)?.name
+                    {surrogateId !== undefined
+                        ? allPlayers.find((player) => player.surrogateId === surrogateId)?.name
                         : "Select player..."}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50"/>
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[350px] p-0">
                 <Command shouldFilter={false}>
-                    <CommandInput  className={"text-lg"} placeholder="Search player..." value={searchTerm} onValueChange={setSearchTerm}/>
+                    <CommandInput className={"text-lg"} placeholder="Search player..." value={searchTerm}
+                                  onValueChange={setSearchTerm}/>
                     <CommandList>
                         <CommandEmpty>No player found.</CommandEmpty>
                         <FixedSizeList

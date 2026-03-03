@@ -1,9 +1,9 @@
-import {Character} from "@/state/GlobalStateProvider"
+import {Character, SurrogateId} from "@/state/GlobalStateProvider"
 import {Country} from "@/domain/Country.ts";
 import {Belt} from "@/domain/Belt.ts";
 
 export interface LeaderBoardEntry {
-    id: number
+    surrogateId: SurrogateId
     name: string
     rating: number
     deviation: number

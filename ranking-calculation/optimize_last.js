@@ -72,6 +72,7 @@ function getGlobalSeedForPooledPlayer(groupSeed, noOfGroups, groupNumber) {
 
 const optimizedJSON = correctMappingAsArray.map(player => ({
     i: convertBase10ToBase64(player.id), //convert to b64
+    sid: player.surrogateId ?? null,     // stable cross-game surrogate id
     n: player.displayName,
     c: {
         a: player.challonge.accounts.map(acc => ({
@@ -110,7 +111,7 @@ const optimizedJSON = correctMappingAsArray.map(player => ({
 }));
 
 const optimizedAsArray = Object.values(optimizedJSON).map(fields => {
-    const {i, n, c, g, s, h, characters, country, belt, playtime} = fields;
+    const {i, sid, n, c, g, s, h, characters, country, belt, playtime} = fields;
     const {a: ca, p: cp} = c;
     const {a: ga, e: ge} = g;
     const {r: sr, d: sd, v: sv} = s;
@@ -179,7 +180,8 @@ const optimizedAsArray = Object.values(optimizedJSON).map(fields => {
         shortCharacters,
         country,
         belt,
-        playtime
+        playtime,
+        sid
     ];
 })
 

@@ -1,36 +1,14 @@
-import {Game} from "@/domain/Game.tsx";
-import {FullPlayerData, useGlobalState, useGlobalStateL1} from "@/state/GlobalStateProvider.tsx";
+import {SurrogateId, useGlobalState, useGlobalStateL1} from "@/state/GlobalStateProvider.tsx";
 
-function findCrossPlayer(
-    currentPlayerId: number,
-    currentPlayers: FullPlayerData[] | undefined,
-    targetPlayers: FullPlayerData[] | undefined
-): FullPlayerData | undefined {
-    const currentPlayer = currentPlayers?.find(player => player.id === currentPlayerId);
-    if (!currentPlayer) return undefined;
-
-    return targetPlayers?.find(player =>
-        player.challonge.accounts.some(account =>
-            currentPlayer.challonge.accounts.some(acc => acc.challongeId === account.challongeId)
-        ) ||
-        player.gg.accounts.some(account =>
-            currentPlayer.gg.accounts.some(acc => acc.userId === account.userId)
-        )
-    )
-}
-
-export const useCrossPlayer = (): (playerId: number, targetGame: Game) => number | undefined => {
+export const useCrossPlayer = (): (surrogateId: SurrogateId) => boolean => {
     const stateBlaze = useGlobalState();
     const stateL1 = useGlobalStateL1();
 
-    const getTargetPlayerId = (playerId: number, targetGame: Game): number | undefined => {
-        if (targetGame === Game.Blaze) {
-            return findCrossPlayer(playerId, stateL1.correctMapping, stateBlaze.correctMapping)?.id;
-        } else {
-            return findCrossPlayer(playerId, stateBlaze.correctMapping, stateL1.correctMapping)?.id;
-        }
-    }
+    const isCrossPlayer = (surrogateId: SurrogateId): boolean => {
+        const inBlaze = stateBlaze.correctMapping?.some(player => player.surrogateId === surrogateId);
+        const inL1 = stateL1.correctMapping?.some(player => player.surrogateId === surrogateId);
+        return !!(inBlaze && inL1);
+    };
 
-
-    return getTargetPlayerId;
+    return isCrossPlayer;
 };

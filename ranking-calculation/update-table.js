@@ -51,6 +51,7 @@ const players = correctMappingAsArray.map(player => {
 const getPlayerDataDTO = (player) => {
     return {
         id: player.id,
+        surrogateId: player.surrogateId ?? null,
         displayName: player.displayName,
         challongeAccounts: player.challonge.accounts,
         ggAccounts: player.gg.accounts,

@@ -13,8 +13,9 @@ import {LoadingSpinner} from "@/components/LoadingSpinner.tsx";
 import {useCombiState} from "@/hooks/useCombiState.ts";
 import {useGameParams} from "@/hooks/useGameParams.ts";
 import {Game} from "@/domain/Game.tsx";
+import {PlayerId, SurrogateId} from "@/state/GlobalStateProvider.tsx";
 
-const singleChartConfig = (playerId: number) => ({
+const singleChartConfig = (playerId: PlayerId) => ({
     ["rating-" + playerId]: {
         label: "All Time Rating",
         color: "hsl(var(--chart-1))",
@@ -34,7 +35,7 @@ const singleChartConfig = (playerId: number) => ({
 
 interface RatingGraphProps {
     title: string,
-    playerIds: number[]
+    surrogateIds: SurrogateId[]
 }
 
 enum XDimension {
@@ -64,15 +65,15 @@ export const RatingGraph: FC<RatingGraphProps> = (props) => {
         return <LoadingSpinner/>
     }
 
-    const players = props.playerIds
+    const players = props.surrogateIds
         // prevent crash during game switch
-        .filter((playerId) => correctMapping.some(player => player.id === playerId))
-        .map(playerId => convertPlayer(correctMapping, rankedMatches, tourneys, playerId))
+        .filter((surrogateId) => correctMapping.some(player => player.surrogateId === surrogateId))
+        .map(surrogateId => convertPlayer(correctMapping, rankedMatches, tourneys, surrogateId))
 
     const multiChartConfig = {
         ...players.reduce((config: Partial<ChartConfig>, player) => {
             const index = players.indexOf(player);
-            config[`rating-${player.id}`] = {
+            config[`rating-${player.playerId}`] = {
                 label: player.displayName,
                 color: `hsl(var(--chart-${(index) % 5 + 1}))`,
             };
@@ -80,7 +81,7 @@ export const RatingGraph: FC<RatingGraphProps> = (props) => {
         }, {}),
         ...players.reduce((config: Partial<ChartConfig>, player) => {
             const index = players.indexOf(player);
-            config[`rank-${player.id}`] = {
+            config[`rank-${player.playerId}`] = {
                 label: player.displayName,
                 color: `hsl(var(--chart-${(index) % 5 + 1}))`,
             };
@@ -107,7 +108,7 @@ export const RatingGraph: FC<RatingGraphProps> = (props) => {
     const currentRank = (player: Player) => [...correctMapping]
         .sort((a, b) => (b.glickoStats.rating - 2 * b.glickoStats.deviation) - (a.glickoStats.rating - 2 * a.glickoStats.deviation))
         .filter(entry => entry.glickoHistory.length > 1)
-        .findIndex(p => p.id === player.id) + 1;
+        .findIndex(p => p.surrogateId === player.surrogateId) + 1;
 
     const peakRank = Math.min( // only show peak rank for latest whatever
         ...players.flatMap(p => p.tourneyHistory.map(part => part.rank).filter(rank => rank > 0)),
@@ -128,7 +129,7 @@ export const RatingGraph: FC<RatingGraphProps> = (props) => {
                 .sort((a, b) => a.date.localeCompare(b.date))
                 .map((part, index) => ({
                         ...part,
-                        playerId: player.id,
+                        playerId: player.playerId,
                         ordinal: index,
                     })
                 ))
@@ -150,14 +151,14 @@ export const RatingGraph: FC<RatingGraphProps> = (props) => {
         ...players.map(player => ({
             ordinal: player.tourneyHistory.length,
             time: lastTimePoint,
-            ["rating-" + player.id]: player.glickoPlayer.rating,
-            ["rank-" + player.id]: currentRank(player),
+            ["rating-" + player.playerId]: player.glickoPlayer.rating,
+            ["rank-" + player.playerId]: currentRank(player),
             label: "Now",
             isPeak: players.length === 1 && isPeak(player.glickoPlayer.rating, currentRank(player))
         }))
     ]
 
-    const chartConfig = players.length === 1 ? singleChartConfig(players[0].id) : multiChartConfig
+    const chartConfig = players.length === 1 ? singleChartConfig(players[0].playerId) : multiChartConfig
 
     const lastPeakedEntry = chartData
         .filter(entry => entry.isPeak)
@@ -250,13 +251,13 @@ export const RatingGraph: FC<RatingGraphProps> = (props) => {
                         {
                             players.map((player) => (
                                 <Line
-                                    key={player.id}
-                                    dataKey={(yScale === YDimension.Rating ? "rating-" : "rank-") + player.id}
+                                    key={player.playerId}
+                                    dataKey={(yScale === YDimension.Rating ? "rating-" : "rank-") + player.playerId}
                                     type="linear"
                                     connectNulls={true}
                                     stroke={yScale === YDimension.Rating
-                                        ? `var(--color-rating-${player.id})`
-                                        : `var(--color-rank-${player.id})`
+                                        ? `var(--color-rating-${player.playerId})`
+                                        : `var(--color-rank-${player.playerId})`
                                     }
                                     strokeWidth={2}
                                     dot={({payload, ...props}) => {

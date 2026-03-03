@@ -9,11 +9,12 @@ import logoL1 from "@/assets/logo_l1.png";
 import logoPro from "@/assets/llbprologo.svg";
 import {Game} from "@/domain/Game.tsx";
 import {useCrossPlayer} from "@/hooks/useCrossPlayer.ts";
+import {SurrogateId} from "@/state/GlobalStateProvider.tsx";
 
 export const NavHeader: FC = () => {
     const navigate = useNavigate();
     const currentGame = useGameParams();
-    const getTargetPlayerId = useCrossPlayer();
+    const isCrossPlayer = useCrossPlayer();
 
     const onGameSwitch = () => {
         const currentPath = "" + window.location.pathname;
@@ -22,16 +23,14 @@ export const NavHeader: FC = () => {
             : currentPath.replace('/llb', '/ll');
 
         if (newPath.includes("/players")) {
-            const playerId = Number(newPath.split("/").pop());
+            const surrogateId = Number(newPath.split("/").pop()) as SurrogateId;
 
-            const targetPlayerId = getTargetPlayerId(playerId, currentGame === Game.L1 ? Game.Blaze : Game.L1);
+            const isPlayingTargetGame = isCrossPlayer(surrogateId);
 
-            if (!targetPlayerId) {
+            if (!isPlayingTargetGame) {
                 navigate(currentGame === Game.L1 ? "/llb" : "/ll");
             } else {
-                // new path except replace the player id with the id of the target player
-                const newPlayerPath = newPath.replace(playerId.toString(), targetPlayerId.toString());
-                navigate(newPlayerPath);
+                navigate(newPath);
             }
 
             return;

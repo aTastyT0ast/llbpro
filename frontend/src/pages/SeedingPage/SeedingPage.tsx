@@ -311,7 +311,7 @@ export const SeedingPage: FC = () => {
                                                             : undefined;
 
                                                     let nameCell = <TableCell className={"blaze-font"}><a
-                                                        href={`/${game}/players/${participant.id}`}
+                                                        href={`/${game}/players/${participant.surrogateId ?? participant.playerId}`}
                                                         target={"_blank"}>{participant.name}</a>
                                                     </TableCell>;
 
@@ -319,7 +319,7 @@ export const SeedingPage: FC = () => {
                                                         nameCell =
                                                             <TableCell className={"blaze-font"}>
                                                                 <div>{belt}<a
-                                                                    href={`/${game}/players/${participant.id}`}
+                                                                    href={`/${game}/players/${participant.surrogateId ?? participant.playerId}`}
                                                                     target={"_blank"}>{participant.name}</a>
                                                                 </div>
                                                             </TableCell>
@@ -327,7 +327,7 @@ export const SeedingPage: FC = () => {
                                                     }
 
 
-                                                    if (participant.id === undefined) {
+                                                    if (participant.playerId === undefined) {
                                                         nameCell = <TableCell>
                                                             <TooltipProvider>
                                                                 <Tooltip>
@@ -368,12 +368,12 @@ export const SeedingPage: FC = () => {
 
                                                     return (
                                                         <TableRow key={index}>
-                                                            <TableCell><Checkbox disabled={participant.id === undefined}
+                                                            <TableCell><Checkbox disabled={participant.playerId === undefined}
                                                                                  onCheckedChange={(checked) => {
                                                                                      if (checked) {
-                                                                                         setSelectedPlayerIds([...selectedPlayerIds, participant.id!]);
+                                                                                         setSelectedPlayerIds([...selectedPlayerIds, participant.playerId!]);
                                                                                      } else {
-                                                                                         setSelectedPlayerIds(selectedPlayerIds.filter(id => id !== participant.id));
+                                                                                         setSelectedPlayerIds(selectedPlayerIds.filter(id => id !== participant.playerId));
                                                                                      }
                                                                                  }}/></TableCell>
                                                             <TableCell>{index + 1}</TableCell>

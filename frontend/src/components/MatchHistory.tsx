@@ -12,7 +12,6 @@ export const MatchHistory: FC<MatchStatsProps> = ({matchHistory}) => {
     const onPlayerClick = usePlayerNavigation();
     const onTourneyClick = useTourneyNavigation();
 
-
     const getClassNames = (match: Match) => {
         const resultClassName = match.isWin && match.prediction < 0.5 ? "win" :
             !match.isWin && match.prediction > 0.5 ? "loss" :
@@ -59,7 +58,7 @@ export const MatchHistory: FC<MatchStatsProps> = ({matchHistory}) => {
                                                         <TableRow key={index}>
                                                             <TableCell
                                                                 className={"cursor-pointer hover-highlight whitespace-normal break-all blaze-font"}
-                                                                onClick={onPlayerClick(match.opponent.playerId)}>{match.opponent.displayName}</TableCell>
+                                                                onClick={onPlayerClick(match.opponent.surrogateId)}>{match.opponent.displayName}</TableCell>
                                                             <TableCell
                                                                 className={classNames.prediction}>{getPercentageString(match.prediction)}</TableCell>
                                                             <TableCell className={classNames.result}>

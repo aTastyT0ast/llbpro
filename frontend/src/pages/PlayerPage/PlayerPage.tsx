@@ -23,7 +23,7 @@ export const PlayerPage: FC = () => {
         playerId = parseInt(playerIdString);
     }
 
-    const fullPlayerData = correctMapping?.find(player => player.id === playerId);
+    const fullPlayerData = correctMapping?.find(player => player.surrogateId === playerId);
 
     useEffect(() => {
         if (fullPlayerData) {
@@ -52,7 +52,7 @@ export const PlayerPage: FC = () => {
         correctMapping,
         rankedMatches,
         tourneys,
-        playerId
+        fullPlayerData.surrogateId
     );
 
     if (player.displayName.includes("redacted") && !showRedacted) {
@@ -62,7 +62,7 @@ export const PlayerPage: FC = () => {
     const currentRank = [...correctMapping]
         .sort((a, b) => (b.glickoStats.rating - 2 * b.glickoStats.deviation) - (a.glickoStats.rating - 2 * a.glickoStats.deviation))
         .filter(entry => entry.glickoHistory.length > 1)
-        .findIndex(p => p.id === player.id) + 1;
+        .findIndex(p => p.playerId === player.playerId) + 1;
 
     return (
         <div ref={scrollRef} className={"player-page mb-[125px]"}>
@@ -70,7 +70,7 @@ export const PlayerPage: FC = () => {
             <div className={"player-content"}>
                 <div className={"player-content-column"}>
                     <PlayerProfile player={player} currentRank={currentRank}/>
-                    <RatingGraph title={"Rating History"} playerIds={[player.id]}/>
+                    <RatingGraph title={"Rating History"} surrogateIds={[player.surrogateId]}/>
                     <TourneyHistory player={player} tourneyHistory={player.tourneyHistory}/>
                 </div>
                 <div className={"player-content-column"}>

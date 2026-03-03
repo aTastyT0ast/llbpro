@@ -102,7 +102,7 @@ export const MatchStats: FC<MatchStatsProps> = (props) => {
                         {most.played.map((opponent, index) => (
                             <TableRow key={index}>
                                 <TableCell className={"cursor-pointer hover-highlight blaze-font"}
-                                           onClick={onPlayerClick(justMatchesWithTourney.find(match => match.opponent.displayName === opponent.opponentName)!.opponent.playerId)}>{opponent.opponentName}</TableCell>
+                                           onClick={onPlayerClick(justMatchesWithTourney.find(match => match.opponent.displayName === opponent.opponentName)!.opponent.surrogateId)}>{opponent.opponentName}</TableCell>
                                 <TableCell>{opponent.count}</TableCell>
                                 <TableCell>{opponent.winRate}</TableCell>
                             </TableRow>
@@ -124,7 +124,7 @@ export const MatchStats: FC<MatchStatsProps> = (props) => {
                             {most.beaten.map((opponent, index) => (
                                 <TableRow key={index}>
                                     <TableCell className={"cursor-pointer hover-highlight blaze-font"}
-                                               onClick={onPlayerClick(justMatchesWithTourney.find(match => match.opponent.displayName === opponent.opponentName)!.opponent.playerId)}>{opponent.opponentName}</TableCell>
+                                               onClick={onPlayerClick(justMatchesWithTourney.find(match => match.opponent.displayName === opponent.opponentName)!.opponent.surrogateId)}>{opponent.opponentName}</TableCell>
                                     <TableCell>{opponent.count}</TableCell>
                                 </TableRow>
                             ))}
@@ -146,7 +146,7 @@ export const MatchStats: FC<MatchStatsProps> = (props) => {
                             {most.lostTo.map((opponent, index) => (
                                 <TableRow key={index}>
                                     <TableCell className={"cursor-pointer hover-highlight blaze-font"}
-                                               onClick={onPlayerClick(justMatchesWithTourney.find(match => match.opponent.displayName === opponent.opponentName)!.opponent.playerId)}>{opponent.opponentName}</TableCell>
+                                               onClick={onPlayerClick(justMatchesWithTourney.find(match => match.opponent.displayName === opponent.opponentName)!.opponent.surrogateId)}>{opponent.opponentName}</TableCell>
                                     <TableCell>{opponent.count}</TableCell>
                                 </TableRow>
                             ))}
@@ -177,7 +177,7 @@ export const MatchStats: FC<MatchStatsProps> = (props) => {
                                 return (
                                     <TableRow key={index}>
                                         <TableCell className={"cursor-pointer hover-highlight blaze-font"}
-                                                   onClick={onPlayerClick(match.opponent.playerId)}>{match.opponent.displayName}</TableCell>
+                                                   onClick={onPlayerClick(match.opponent.surrogateId)}>{match.opponent.displayName}</TableCell>
                                         <TableCell>{getPercentageString(match.prediction)}</TableCell>
                                         <TableCell className={"hover-highlight cursor-pointer"}
                                                    onClick={onTourneyClick(match.tourney.id, match.tourney.platform)}>{match.tourney.name}</TableCell>
@@ -203,7 +203,7 @@ export const MatchStats: FC<MatchStatsProps> = (props) => {
                                 return (
                                     <TableRow key={index}>
                                         <TableCell className={"cursor-pointer hover-highlight blaze-font"}
-                                                   onClick={onPlayerClick(match.opponent.playerId)}>{match.opponent.displayName}</TableCell>
+                                                   onClick={onPlayerClick(match.opponent.surrogateId)}>{match.opponent.displayName}</TableCell>
                                         <TableCell>{getPercentageString(match.prediction)}</TableCell>
                                         <TableCell className={"hover-highlight cursor-pointer"}
                                                    onClick={onTourneyClick(match.tourney.id, match.tourney.platform)}>{match.tourney.name}</TableCell>

@@ -1,16 +1,17 @@
-import {FullMatchData, FullPlayerData, Tourney} from "@/state/GlobalStateProvider.tsx";
+import {FullMatchData, FullPlayerData, SurrogateId, Tourney} from "@/state/GlobalStateProvider.tsx";
 import {MatchHistoryEntry, Player} from "@/domain/Player.ts";
 
 export function convertPlayer(
     correctMapping: FullPlayerData[],
     rankedMatches: FullMatchData[],
     tourneys: Tourney[],
-    playerId: number
+    surrogateId: SurrogateId
 ): Player {
-    const fullPlayerData = correctMapping.find(player => player.id === playerId);
+    const fullPlayerData = correctMapping.find(player => player.surrogateId === surrogateId);
     if (!fullPlayerData) {
-        throw new Error("Couldn't find player for id " + playerId);
+        throw new Error("Couldn't find player for surrogateId" + surrogateId);
     }
+    const playerId = fullPlayerData.playerId;
 
     const matchHistory: MatchHistoryEntry[] = rankedMatches.filter(entry =>
         entry.matches.some(match => match.player1 === playerId || match.player2 === playerId)
@@ -29,21 +30,25 @@ export function convertPlayer(
                 .map(match => {
                     const amIPlayer1 = match.player1 === playerId;
                     const opponentId = amIPlayer1 ? match.player2 : match.player1;
-                    return ({
+                    const opponent = correctMapping.find(p => p.playerId === opponentId)!!;
+
+                    return {
                         opponent: {
                             playerId: opponentId,
-                            displayName: correctMapping.find(p => p.id === opponentId)?.name || "Couldn't find player for " + opponentId
+                            surrogateId: opponent.surrogateId,
+                            displayName: opponent.name
                         },
                         date: match.date.toISOString(),
                         prediction: amIPlayer1 ? match.player1Prediction / 100 : 1 - match.player1Prediction / 100,
                         isWin: match.hasPlayer1Won && amIPlayer1 || !match.hasPlayer1Won && match.player2 === playerId
-                    });
+                    };
                 })
         };
     });
 
     const player: Player = {
-        id: fullPlayerData.id,
+        playerId: fullPlayerData.playerId,
+        surrogateId: fullPlayerData.surrogateId,
         displayName: fullPlayerData.name,
         challonge: {
             accounts: fullPlayerData.challonge.accounts,
@@ -78,33 +83,28 @@ export function convertPlayer(
         glickoPlayer: fullPlayerData.glickoStats,
         matchHistory: matchHistory,
         tourneyHistory: fullPlayerData.glickoHistory.map(entry => {
-            const tourney = tourneys.find(t => t.id === entry.tourney.id);
-            const participant = tourney?.participants.find(p => p.playerId === playerId)
+            const tourney = tourneys.find(t => t.id === entry.tourney.id)!!;
+            const participant = tourney?.participants.find(p => p.playerId === playerId)!!
 
             let winnings = "";
             if (tourney?.prizepool && participant && tourney.prizepool.payouts[participant.placement - 1]) {
                 const payout = tourney.prizepool.payouts[participant.placement - 1];
                 const formattedPayout = !Number.isInteger(payout) ? payout.toFixed(2) : String(payout)
-                winnings =  formattedPayout + " " + tourney.prizepool.currency;
+                winnings = formattedPayout + " " + tourney.prizepool.currency;
             }
 
             return ({
                 platform: entry.tourney.platform,
-                tourney: tourney !== undefined ? {
+                tourney: {
                     id: tourney.id,
                     name: tourney.name,
                     url: tourney.url,
-                    hasVod:  tourney.twitchVods?.length > 0 || tourney.ytVods.length > 0,
-                } : {
-                    id: -1,
-                    name: "Couldn't find tourney for " + entry.tourney.id,
-                    url: "Couldn't find tourney for " + entry.tourney.id,
-                    hasVod: false
+                    hasVod: tourney.twitchVods?.length > 0 || tourney.ytVods.length > 0,
                 },
                 date: entry.tourney.date.toISOString(),
-                participantName: participant?.name || "Couldn't find player for " + playerId,
-                placement: participant?.placement || -1,
-                participantCount: tourney?.participants.length || -1,
+                participantName: participant.name,
+                placement: participant.placement,
+                participantCount: tourney.participants.length,
                 rank: entry.rank,
                 glicko: {
                     rating: entry.rating,

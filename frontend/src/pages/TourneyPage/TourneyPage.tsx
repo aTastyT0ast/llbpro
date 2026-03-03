@@ -73,7 +73,7 @@ export const TourneyPage: FC = () => {
         ?.matches;
 
     const noAliases = tourney.participants
-        .filter(p => p.name !== correctMapping.find(player => player.id === p.playerId)?.name)
+        .filter(p => p.name !== correctMapping.find(player => player.playerId === p.playerId)?.name)
         .length === 0;
 
     const getPlatformIcon = (platform: Platform) => {
@@ -143,7 +143,7 @@ export const TourneyPage: FC = () => {
                                     tourney.participants
                                         .sort((a, b) => a.placement - b.placement)
                                         .map(p => {
-                                                const player: FullPlayerData = correctMapping.find(player => player.id === p.playerId)!;
+                                                const player: FullPlayerData = correctMapping.find(player => player.playerId === p.playerId)!;
                                                 const historyEntry = player.glickoHistory.find(h => h.tourney.id === tourney.id && h.tourney.platform === platform)!;
                                                 const nthTourney = player.glickoHistory.indexOf(historyEntry);
                                                 const diff = nthTourney === player.glickoHistory.length - 1
@@ -151,12 +151,12 @@ export const TourneyPage: FC = () => {
                                                     : player.glickoHistory[nthTourney + 1].rating - historyEntry.rating;
 
                                                 const wins = matches?.filter(m =>
-                                                    m.hasPlayer1Won && m.player1 === player.id ||
-                                                    !m.hasPlayer1Won && m.player2 === player.id
+                                                    m.hasPlayer1Won && m.player1 === player.playerId ||
+                                                    !m.hasPlayer1Won && m.player2 === player.playerId
                                                 ).length || 0;
                                                 const losses = matches?.filter(m =>
-                                                    m.hasPlayer1Won && m.player2 === player.id ||
-                                                    !m.hasPlayer1Won && m.player1 === player.id
+                                                    m.hasPlayer1Won && m.player2 === player.playerId ||
+                                                    !m.hasPlayer1Won && m.player1 === player.playerId
                                                 ).length || 0;
 
                                                 let placementIcon = <Crown color={"gold"}/>;
@@ -195,7 +195,7 @@ export const TourneyPage: FC = () => {
                                                         <TableCell>{p.seed}</TableCell>}
                                                     <TableCell>{wins}-{losses}</TableCell>
                                                     <TableCell className={"hover-highlight cursor-pointer"}
-                                                               onClick={onPlayerClick(player.id)}>{nameCell}</TableCell>
+                                                               onClick={onPlayerClick(player.surrogateId)}>{nameCell}</TableCell>
                                                     {!noAliases && showAlias &&
                                                         <TableCell
                                                             className={"max-w-[200px] whitespace-normal"}>{p.name !== player.name ? p.name : "-"}</TableCell>}
@@ -282,8 +282,8 @@ export const TourneyPage: FC = () => {
                                     matches
                                         ?.sort((a, b) => b.date.getTime() - a.date.getTime())
                                         .map(match => {
-                                            const player1 = correctMapping.find(p => p.id === match.player1)!;
-                                            const player2 = correctMapping.find(p => p.id === match.player2)!;
+                                            const player1 = correctMapping.find(p => p.playerId === match.player1)!;
+                                            const player2 = correctMapping.find(p => p.playerId === match.player2)!;
                                             const p1Stats = player1.glickoHistory
                                                 .find(h => h.tourney.id === tourney.id && h.tourney.platform === platform)!;
                                             const p2Stats = player2.glickoHistory
@@ -299,7 +299,7 @@ export const TourneyPage: FC = () => {
                                             return <TableRow key={match.date.getTime()}>
                                                 <TableCell
                                                     className={"hover-highlight cursor-pointer flex border-0 items-center justify-end"}
-                                                    onClick={onPlayerClick(player1.id)}>{match.hasPlayer1Won &&
+                                                    onClick={onPlayerClick(player1.surrogateId)}>{match.hasPlayer1Won &&
                                                     <Crown className={"mr-auto"}
                                                            color={"gold"}/>}{player1.name}</TableCell>
                                                 <TableCell
@@ -322,7 +322,7 @@ export const TourneyPage: FC = () => {
                                                     className={player2Class}>{100 - match.player1Prediction}%</TableCell>
                                                 <TableCell
                                                     className={"hover-highlight cursor-pointer flex border-0 items-center justify-end"}
-                                                    onClick={onPlayerClick(player2.id)}>{!match.hasPlayer1Won &&
+                                                    onClick={onPlayerClick(player2.surrogateId)}>{!match.hasPlayer1Won &&
                                                     <Crown className={"mr-auto"}
                                                            color={"gold"}/>}{player2.name}</TableCell>
                                                 <TableCell>{getTime(match.date.toISOString())}</TableCell>
