@@ -1,5 +1,6 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from mangum import Mangum
 from httpx import AsyncClient
 import base64
@@ -10,6 +11,11 @@ import json
 import boto3
 
 app = FastAPI()
+
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc: HTTPException):
+    print(f"Route not found: {request.method} {request.url.path}")
+    return JSONResponse(status_code=404, content={"detail": "Not Found"})
 
 origins = [
     "http://127.0.0.1:5173",
