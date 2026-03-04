@@ -7,6 +7,7 @@ import {Switch} from "@/components/ui/switch.tsx";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table.tsx";
 import {usePlayerNavigation} from "@/hooks/usePlayerNavigation.ts";
 import {useTourneyNavigation} from "@/hooks/useTourneyNavigation.ts";
+import {PlayerId} from "@/state/GlobalStateProvider.tsx";
 
 export interface MatchStatsProps {
     matchHistory: MatchHistoryEntry[]
@@ -51,7 +52,7 @@ export const MatchStats: FC<MatchStatsProps> = (props) => {
             .slice(0, 3),
     }
 
-    const countByOpponentId = (acc: Map<number, number>, match: Match) => {
+    const countByOpponentId = (acc: Map<PlayerId, number>, match: Match) => {
         if (acc.has(match.opponent.playerId)) {
             acc.set(match.opponent.playerId, acc.get(match.opponent.playerId)! + 1);
         } else {
@@ -66,7 +67,7 @@ export const MatchStats: FC<MatchStatsProps> = (props) => {
     const getMostOpponentsOfSomething = (matchFilter: (match: Match) => boolean) => {
         return [...justMatchesWithTourney
             .filter(matchFilter)
-            .reduce(countByOpponentId, new Map<number, number>())
+            .reduce(countByOpponentId, new Map<PlayerId, number>())
             .entries()
         ]
             .sort(([, aCount], [, bCount]) => bCount - aCount)

@@ -1,7 +1,7 @@
 import React, {ChangeEvent, FC, ReactElement, useEffect, useState} from "react";
 import './SeedingPage.css';
 import {BlazeButton} from "../../components/BlazeButton.tsx";
-import {FullPlayerData} from "../../state/GlobalStateProvider.tsx";
+import {FullPlayerData, SurrogateId} from "../../state/GlobalStateProvider.tsx";
 import {ChallongeCommunity, getSubDomain} from "@/domain/ChallongeCommunity.ts";
 import {Platform} from "@/domain/Player.ts";
 import challongeIcon from "../../assets/challonge.svg";
@@ -54,7 +54,7 @@ export const SeedingPage: FC = () => {
     const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.DESC);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<Error | undefined>();
-    const [selectedPlayerIds, setSelectedPlayerIds] = useState<number[]>([])
+    const [selectedPlayerIds, setSelectedPlayerIds] = useState<SurrogateId[]>([])
 
     useEffect(() => {
         document.title = `Seeding - ${SITE_TITLE}`;
@@ -371,9 +371,9 @@ export const SeedingPage: FC = () => {
                                                             <TableCell><Checkbox disabled={participant.playerId === undefined}
                                                                                  onCheckedChange={(checked) => {
                                                                                      if (checked) {
-                                                                                         setSelectedPlayerIds([...selectedPlayerIds, participant.playerId!]);
+                                                                                         setSelectedPlayerIds([...selectedPlayerIds, participant.surrogateId!]);
                                                                                      } else {
-                                                                                         setSelectedPlayerIds(selectedPlayerIds.filter(id => id !== participant.playerId));
+                                                                                         setSelectedPlayerIds(selectedPlayerIds.filter(id => id !== participant.surrogateId));
                                                                                      }
                                                                                  }}/></TableCell>
                                                             <TableCell>{index + 1}</TableCell>
