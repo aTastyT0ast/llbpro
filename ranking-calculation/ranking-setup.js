@@ -118,17 +118,40 @@ usersWithMultipleChallongeAccounts.forEach(user => {
 const unregisteredFelons = [];
 unregisteredChallongeParticipants
     .filter(p => !p.challongeId)
+    .filter(p => !p.ggDiscriminator)
+    .forEach(felon => {
+        unregisteredFelons.push(felon);
+        correctMapping.set([...correctMapping.entries()].length, {
+            displayName: felon.displayName,
+            challonge: {
+                accounts: [],
+                participations: [felon.partId],
+            },
+            gg: {
+                accounts: [],
+                entrants: []
+            },
+            glickoPlayer: undefined,
+            glickoHistory: []
+        });
+    });
+
+// vorbefüllen unregistered with gg accounts
+const unregisteredParticipantsWithGGAccounts = [];
+unregisteredChallongeParticipants
+    .filter(p => !p.challongeId)
+    .filter(p => !!p.ggDiscriminator)
     .forEach((felon) => {
-        if (!unregisteredFelons.some(f => f.ggDiscriminator === felon.ggDiscriminator)) {
-            unregisteredFelons.push({...felon, participations: [felon.partId]});
+        if (!unregisteredParticipantsWithGGAccounts.some(f => f.ggDiscriminator === felon.ggDiscriminator)) {
+            unregisteredParticipantsWithGGAccounts.push({...felon, participations: [felon.partId]});
         } else {
-            const felonWithMultipleParts = unregisteredFelons.find(f => f.ggDiscriminator === felon.ggDiscriminator);
+            const felonWithMultipleParts = unregisteredParticipantsWithGGAccounts.find(f => f.ggDiscriminator === felon.ggDiscriminator);
             felonWithMultipleParts.participations.push(felon.partId);
         }
     });
 
 
-unregisteredFelons
+unregisteredParticipantsWithGGAccounts
     .forEach(felon => {
         correctMapping.set([...correctMapping.entries()].length, {
             displayName: felon.displayName,
