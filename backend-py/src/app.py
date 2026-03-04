@@ -139,26 +139,37 @@ query getEventId($slug: String) {
     }
 
 
-@app.get("/blaze/players")
-async def get_players_by_query_params(steam_id: str):
-    print("steam player lookup called")
-    if not steam_id:
-        raise HTTPException(status_code=400, detail="Missing steam id")
+@app.get("/players")
+async def get_players_by_query_params(steam_id: str = None, discord_id: str = None):
+    if not steam_id and not discord_id:
+        raise HTTPException(status_code=400, detail="Missing steam_id or discord_id query parameter")
 
-    print("steam_id", steam_id)
+    if steam_id:
+        print("steam player lookup called, steam_id", steam_id)
+        pk = f"STEAMID#{steam_id}"
+        not_found_detail = f"No player found for steam id '{steam_id}'"
+    else:
+        print("discord player lookup called, discord_id", discord_id)
+        pk = f"DISCORDID#{discord_id}"
+        not_found_detail = f"No player found for discord id '{discord_id}'"
 
     response = dynamo_table.get_item(
         Key={
-            "PK": f"STEAMID#{steam_id}",
-            "SK": "GAME#BLAZE",
+            "PK": pk,
+            "SK": pk,
         }
     )
 
     item = response.get("Item")
     if not item:
-        raise HTTPException(status_code=404, detail=f"No player found for steam id '{steam_id}'")
+        raise HTTPException(status_code=404, detail=not_found_detail)
 
-    return json.loads(item["DATA"])
+    data = json.loads(item["DATA"])
+    return {
+        "surrogateId": data.get("surrogateId"),
+        "blazePlayerId": data.get("blazePlayerId"),
+        "l1PlayerId": data.get("l1PlayerId"),
+    }
 
 
 handler = Mangum(app, lifespan="off")

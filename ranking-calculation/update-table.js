@@ -11,7 +11,8 @@ if (!TABLE_NAME) {
 const client = new DynamoDBClient({region: "eu-central-1"});
 const docClient = DynamoDBDocumentClient.from(client);
 
-export const correctMappingAsArray = JSON.parse(String(fs.readFileSync("correct_mapping.json")));
+export const correctMappingBlaze = JSON.parse(String(fs.readFileSync("correct_mapping.json")));
+export const correctMappingL1 = JSON.parse(String(fs.readFileSync("correct_mapping_l1.json")));
 
 const playersWithDiscord = String(fs.readFileSync("../analysis/discord_ids.csv")).split("\r\n").slice(1)
     .map(line => {
@@ -29,29 +30,57 @@ const playersWithSteam = String(fs.readFileSync('../analysis/steam/steam_ids.csv
     })
     .filter(({steamIds}) => steamIds.length > 0);
 
-const players = correctMappingAsArray.map(player => {
-    if (!player.challonge.accounts || player.challonge.accounts.length === 0) {
+const players = correctMappingBlaze.map(blazePlayer => {
+    if (!blazePlayer.challonge.accounts || blazePlayer.challonge.accounts.length === 0) {
         return {
-            ...player,
+            ...blazePlayer,
             steamIds: [],
             discordIds: [],
         };
     }
 
-    const steamPlayer = playersWithSteam.find(p => player.challonge.accounts.some(acc => acc.challongeId === p.challongeId));
-    const discordPlayer = playersWithDiscord.find(p => player.challonge.accounts.some(acc => acc.challongeId === p.challongeId));
+    const steamPlayer = playersWithSteam.find(p => blazePlayer.challonge.accounts.some(acc => acc.challongeId === p.challongeId));
+    const discordPlayer = playersWithDiscord.find(p => blazePlayer.challonge.accounts.some(acc => acc.challongeId === p.challongeId));
+    const l1Player = correctMappingL1.find(l1Player => l1Player.surrogateId === blazePlayer.surrogateId);
+    const l1PlayerId = l1Player ? l1Player.id : null;
 
     return {
-        ...player,
+        ...blazePlayer,
+        blazePlayerId: blazePlayer.id,
+        l1PlayerId: l1PlayerId,
         steamIds: steamPlayer ? steamPlayer.steamIds : [],
         discordIds: discordPlayer ? discordPlayer.discordIds : [],
     }
 });
 
+const remainingPlayers = correctMappingL1
+    .filter(l1Player => !correctMappingBlaze.some(blazePlayer => blazePlayer.surrogateId === l1Player.surrogateId))
+    .map(l1Player => {
+        if (!l1Player.challonge.accounts || l1Player.challonge.accounts.length === 0) {
+            return {
+                ...l1Player,
+                steamIds: [],
+                discordIds: [],
+            };
+        }
+
+        const steamPlayer = playersWithSteam.find(p => l1Player.challonge.accounts.some(acc => acc.challongeId === p.challongeId));
+        const discordPlayer = playersWithDiscord.find(p => l1Player.challonge.accounts.some(acc => acc.challongeId === p.challongeId));
+
+        return {
+            ...l1Player,
+            blazePlayerId: null,
+            l1PlayerId: l1Player.id,
+            steamIds: steamPlayer ? steamPlayer.steamIds : [],
+            discordIds: discordPlayer ? discordPlayer.discordIds : [],
+        }
+    });
+
 const getPlayerDataDTO = (player) => {
     return {
-        id: player.id,
-        surrogateId: player.surrogateId ?? null,
+        surrogateId: player.surrogateId,
+        blazePlayerId: player.blazePlayerId,
+        l1PlayerId: player.l1PlayerId,
         displayName: player.displayName,
         challongeAccounts: player.challonge.accounts,
         ggAccounts: player.gg.accounts,
@@ -66,8 +95,8 @@ const writePlayersToDynamo = async (players) => {
 
     for (const player of players) {
         const item = {
-            PK: `PLAYER#BLAZE#${player.id}`,
-            SK: `PLAYER#BLAZE#${player.id}`,
+            PK: `PLAYER#${player.surrogateId}`,
+            SK: `PLAYER#${player.surrogateId}`,
             DATA: JSON.stringify(getPlayerDataDTO(player)),
         };
         items.push(item);
@@ -75,7 +104,7 @@ const writePlayersToDynamo = async (players) => {
         for (const steamId of player.steamIds) {
             items.push({
                 PK: `STEAMID#${steamId}`,
-                SK: "GAME#BLAZE",
+                SK: `STEAMID#${steamId}`,
                 DATA: JSON.stringify(getPlayerDataDTO(player)),
             });
         }
@@ -83,7 +112,7 @@ const writePlayersToDynamo = async (players) => {
         for (const discordId of player.discordIds) {
             items.push({
                 PK: `DISCORDID#${discordId}`,
-                SK: "GAME#BLAZE",
+                SK: `DISCORDID#${discordId}`,
                 DATA: JSON.stringify(getPlayerDataDTO(player)),
             });
         }
@@ -103,11 +132,11 @@ const writePlayersToDynamo = async (players) => {
     for (let i = 0; i < chunks.length; i++) {
         const chunk = chunks[i];
         const requestItems = chunk.map(item => ({
-            PutRequest: { Item: item }
+            PutRequest: {Item: item}
         }));
 
         const command = new BatchWriteCommand({
-            RequestItems: { [TABLE_NAME]: requestItems }
+            RequestItems: {[TABLE_NAME]: requestItems}
         });
 
         const response = await docClient.send(command);
@@ -127,4 +156,4 @@ const writePlayersToDynamo = async (players) => {
     }
 };
 
-await writePlayersToDynamo(players);
+await writePlayersToDynamo([...players, ...remainingPlayers]);
