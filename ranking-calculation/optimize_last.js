@@ -316,7 +316,7 @@ const optiCh = chTourneys.map(({tournament, ytVods, twitchVods, prizepool}) => {
         tourneyType,
         ytVods,
         twitchVods,
-        null //prizepool
+        prizepool
     ]
 });
 
@@ -387,7 +387,7 @@ const optiGG = ggTourneys.map((entry) => {
         null,
         entry.ytVods,
         entry.twitchVods,
-        null //prizepool
+        prizepool
     ]
 });
 

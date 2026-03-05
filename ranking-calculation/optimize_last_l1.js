@@ -322,7 +322,7 @@ const optiGG = ggTourneys.map((entry) => {
         null,
         entry.ytVods,
         entry.twitchVods,
-        null // prizepool
+        null // prizepool, there are none in GG YET, might have to do this for mach 2
     ]
 });
 

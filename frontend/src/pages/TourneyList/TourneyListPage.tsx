@@ -4,7 +4,7 @@ import {getDateStringFromDate} from "../../shared/date-utils.ts";
 import ggIcon from '../../assets/gg.svg';
 import challongeIcon from '../../assets/challonge.svg';
 import {Platform} from "../../domain/Player.ts";
-import {Tourney} from "../../state/GlobalStateProvider.tsx";
+import {PrizePool, Tourney} from "../../state/GlobalStateProvider.tsx";
 import {SortOrder} from "../../shared/math-utils.ts";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table.tsx";
 import {ArrowDown, ArrowUp, Filter, Video} from "lucide-react";
@@ -100,15 +100,15 @@ export const TourneyListPage: FC = () => {
         );
     }
 
-    // const _prizepoolContent = (prizePool: PrizePool | null) => {
-    //     if (!prizePool) {
-    //         return "";
-    //     }
-    //
-    //     const pot = prizePool.prizePot;
-    //     const formattedPot = !Number.isInteger(pot) ? pot.toFixed(2) : String(pot);
-    //     return formattedPot + " " + prizePool.currency;
-    // }
+    const prizepoolContent = (prizePool: PrizePool | null) => {
+        if (!prizePool) {
+            return "";
+        }
+
+        const pot = prizePool.prizePot;
+        const formattedPot = !Number.isInteger(pot) ? pot.toFixed(2) : String(pot);
+        return formattedPot + " " + prizePool.currency;
+    }
 
     const filteredTourneys = tourneys
         .map(tourney => {
@@ -179,7 +179,7 @@ export const TourneyListPage: FC = () => {
                             {tableHeadCell(Sorter.NAME, "Name")}
                             <TableHead>Winner</TableHead>
                             {tableHeadCell(Sorter.COUNT, "Participants")}
-                            {/*{tableHeadCell(Sorter.PRIZEPOOL, "Prizepool")}*/}
+                            {tableHeadCell(Sorter.PRIZEPOOL, "Prizepool")}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -197,7 +197,7 @@ export const TourneyListPage: FC = () => {
                                                onClick={onTourneyClick(tourney.id, tourney.platform)}>{tourney.name}</TableCell>
                                     <TableCell>{tourney.winner?.name}</TableCell>
                                     <TableCell>{tourney.participants.length}</TableCell>
-                                    {/*<TableCell>{prizepoolContent(tourney.prizepool)}</TableCell>*/}
+                                    <TableCell>{prizepoolContent(tourney.prizepool)}</TableCell>
                                 </TableRow>
                             ))}
                     </TableBody>
