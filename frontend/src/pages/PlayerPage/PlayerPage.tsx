@@ -2,7 +2,7 @@ import {FC, useEffect, useRef} from 'react'
 import './PlayerPage.css'
 import {PlayerStats} from "../../components/PlayerStats.tsx";
 import {PlayerProfile} from "../../components/PlayerProfile.tsx";
-import {useLocation, useParams} from "react-router-dom";
+import {useParams, useSearchParams} from "react-router-dom";
 import {RatingGraph} from "@/components/RatingGraph.tsx";
 import {TourneyHistory} from "@/components/TourneyHistory.tsx";
 import {MatchHistory} from "@/components/MatchHistory.tsx";
@@ -13,8 +13,8 @@ import {SITE_TITLE} from "@/shared/constants.ts";
 
 export const PlayerPage: FC = () => {
     const {playerId: playerIdString} = useParams();
-    const location = useLocation();
-    const showRedacted = new URLSearchParams(location.search).get('showRedacted') === 'true';
+    const [searchParams] = useSearchParams();
+    const showRedacted = searchParams.get('showRedacted') === 'true';
     const {correctMapping, rankedMatches, tourneys} = useCombiState();
     const scrollRef = useRef<HTMLDivElement>(null);
 

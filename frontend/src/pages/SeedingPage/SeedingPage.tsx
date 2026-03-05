@@ -1,4 +1,5 @@
 import React, {ChangeEvent, FC, ReactElement, useEffect, useState} from "react";
+import {useSearchParams} from "react-router-dom";
 import './SeedingPage.css';
 import {BlazeButton} from "../../components/BlazeButton.tsx";
 import {FullPlayerData, SurrogateId} from "../../state/GlobalStateProvider.tsx";
@@ -46,7 +47,8 @@ enum Sorter {
 export const SeedingPage: FC = () => {
     const {correctMapping} = useCombiState();
     const game = useGameParams();
-    const [tourneyId, setTourneyId] = useState<string>("");
+    const [searchParams] = useSearchParams();
+    const [tourneyId, setTourneyId] = useState<string>(searchParams.get("name") ?? "");
     const [selectedPlatform, setSelectedPlatform] = useState<Platform>(Platform.Challonge);
     const [challongeCommunity, setChallongeCommunity] = useState<ChallongeCommunity | undefined>();
     const [tourneySeeding, setTourneySeeding] = useState<TourneySeedingResponse | undefined>(undefined);
