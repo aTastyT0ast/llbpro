@@ -8,7 +8,6 @@ from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 import os
 import json
-import boto3
 
 app = FastAPI()
 
@@ -34,10 +33,17 @@ app.add_middleware(
 CHALLONGE_API_KEY = os.environ['CHALLONGE_API_KEY']
 CHALLONGE_USERNAME = os.environ['CHALLONGE_USERNAME']
 GG_API_KEY = os.environ['GG_API_KEY']
-TABLE_NAME = os.environ['TABLE_NAME']
 
-dynamodb = boto3.resource('dynamodb', region_name=os.environ.get('AWS_REGION', 'eu-central-1'))
-dynamo_table = dynamodb.Table(TABLE_NAME)
+_players_path = os.path.join(os.path.dirname(__file__), "players.json")
+with open(_players_path, "r", encoding="utf-8") as _f:
+    _players_list: list = json.load(_f)
+
+players_table: dict = {}
+for _p in _players_list:
+    for _steam_id in _p.get("steamIds", []):
+        players_table[f"STEAMID#{_steam_id}"] = _p
+    for _discord_id in _p.get("discordIds", []):
+        players_table[f"DISCORDID#{_discord_id}"] = _p
 
 
 @app.get("/challonge/tournaments/{tourney_id}/participants")
@@ -152,25 +158,15 @@ async def get_players_by_query_params(steam_id: str = None, discord_id: str = No
 
     if steam_id:
         print("steam player lookup called, steam_id", steam_id)
-        pk = f"STEAMID#{steam_id}"
-        not_found_detail = f"No player found for steam id '{steam_id}'"
+        key = f"STEAMID#{steam_id}"
     else:
         print("discord player lookup called, discord_id", discord_id)
-        pk = f"DISCORDID#{discord_id}"
-        not_found_detail = f"No player found for discord id '{discord_id}'"
+        key = f"DISCORDID#{discord_id}"
 
-    response = dynamo_table.get_item(
-        Key={
-            "PK": pk,
-            "SK": pk,
-        }
-    )
-
-    item = response.get("Item")
-    if not item:
+    data = players_table.get(key)
+    if not data:
         return Response(status_code=204)
 
-    data = json.loads(item["DATA"])
     return {
         "surrogateId": data.get("surrogateId"),
         "blazePlayerId": data.get("blazePlayerId"),

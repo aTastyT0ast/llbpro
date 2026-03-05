@@ -31,4 +31,5 @@ archive
 analysis
 backend-py/python
 backend-py/.venv
+backend-py/src/*.json
 infrastructure/cdk.context.json

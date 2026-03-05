@@ -36,3 +36,4 @@
 4. Run `node ranking-calculation/assign-surrogate-ids.js`
 5. Run `node ranking-calculation/optimize_last.js`
 6. Run `node ranking-calculation/optimize_last_l1.js`
+7. Run `node ranking-calculation/export-players-json.js`

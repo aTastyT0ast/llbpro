@@ -7,7 +7,6 @@ import path from "node:path";
 import * as acm from "aws-cdk-lib/aws-certificatemanager";
 import * as route53 from "aws-cdk-lib/aws-route53";
 import * as targets from "aws-cdk-lib/aws-route53-targets";
-import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 
 export interface ApiProps {
     CHALLONGE_USERNAME: string;
@@ -15,7 +14,6 @@ export interface ApiProps {
     GG_API_KEY: string;
     certificateArn: string;
     domainName: string;
-    table: dynamodb.Table;
 }
 
 export class LLBProApi extends Construct {
@@ -47,12 +45,9 @@ export class LLBProApi extends Construct {
             environment: {
                 CHALLONGE_USERNAME: props.CHALLONGE_USERNAME || "",
                 CHALLONGE_API_KEY: props.CHALLONGE_API_KEY || "",
-                GG_API_KEY: props.GG_API_KEY || "",
-                TABLE_NAME: props.table.tableName,
+                GG_API_KEY: props.GG_API_KEY || ""
             }
         });
-
-        props.table.grantReadData(apiLambda);
 
         const certificate = acm.Certificate.fromCertificateArn(this, 'ApiCertificate', props.certificateArn);
         const zone = route53.HostedZone.fromLookup(this, 'Zone', {domainName: props.domainName});
