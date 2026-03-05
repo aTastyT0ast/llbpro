@@ -1,5 +1,5 @@
 import {FC, useEffect, useState} from "react";
-import {useNavigate, useParams} from "react-router-dom";
+import {useParams} from "react-router-dom";
 import {useCombiState} from "@/hooks/useCombiState.ts";
 import {LoadingSpinner} from "@/components/LoadingSpinner.tsx";
 import {Platform} from "@/domain/Player.ts";
@@ -10,12 +10,12 @@ import {getRatingDiffClassName} from "@/shared/stat-utils.ts";
 import {usePlayerNavigation} from "@/hooks/usePlayerNavigation.ts";
 import {getTime} from "@/shared/date-utils.ts";
 import {Award, Coins, Crown, ExternalLink, Rose, Tag} from "lucide-react";
+import {Link} from "react-router-dom";
 import {getRatingUpdate} from "@/shared/math-utils.ts";
 import {PlacementBarChart} from "@/components/PlacementBarChart.tsx";
 import challongeIcon from "@/assets/challonge.svg";
 import ggIcon from "@/assets/gg.svg";
 import {BracketPreview} from "@/components/BracketPreview.tsx";
-import {useGameParams} from "@/hooks/useGameParams.ts";
 import {Switch} from "@/components/ui/switch.tsx";
 import {Label} from "@/components/ui/label.tsx";
 import {Belt, getBeltColor} from "@/domain/Belt.ts";
@@ -24,8 +24,6 @@ import {SITE_TITLE} from "@/shared/constants.ts";
 export const TourneyPage: FC = () => {
     const {tourneyId: tourneyIdString, platform: platformString} = useParams();
     const tourneyId = Number(tourneyIdString);
-    const navigate = useNavigate();
-    const game = useGameParams();
     const [showAlias, setShowAlias] = useState<boolean>(false)
 
     let platform = Platform.CUSTOM;
@@ -55,16 +53,16 @@ export const TourneyPage: FC = () => {
     }
     if (isNaN(tourneyId)) {
         return (
-            <div>
-                <h1>Invalid tourney id</h1>
+            <div className={"flex items-center h-full"}>
+                <p>Invalid tournament id</p>
             </div>
         );
     }
     if (!tourney) {
-        navigate(`/${game}`);
         return (
-            <div>
-                <h1>Tourney not found</h1>
+            <div className={"flex flex-col justify-center h-full"}>
+                <p>This tournament has not been imported</p>
+                <p>Make sure to check out the <Link to="/faq">FAQs</Link></p>
             </div>
         );
     }

@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from mangum import Mangum
 from httpx import AsyncClient
 import base64
@@ -168,7 +168,7 @@ async def get_players_by_query_params(steam_id: str = None, discord_id: str = No
 
     item = response.get("Item")
     if not item:
-        raise HTTPException(status_code=404, detail=not_found_detail)
+        return Response(status_code=204)
 
     data = json.loads(item["DATA"])
     return {

@@ -24,8 +24,8 @@ export class LLBProApi extends Construct {
         super(parent, name);
 
         const runtime = lambda.Runtime.PYTHON_3_12;
-        const seedingLambda = new lambda.Function(this, 'LLBPro-SeedingLambda', {
-            functionName: 'LLBPro-SeedingLambda',
+        const apiLambda = new lambda.Function(this, 'LLBPro-ApiLambda', {
+            functionName: 'LLBPro-ApiLambda',
             runtime: runtime,
             code: lambda.Code.fromAsset(path.join(__dirname, '..', '..', '..', '/backend-py', 'src')),
             layers: [
@@ -52,7 +52,7 @@ export class LLBProApi extends Construct {
             }
         });
 
-        props.table.grantReadData(seedingLambda);
+        props.table.grantReadData(apiLambda);
 
         const certificate = acm.Certificate.fromCertificateArn(this, 'ApiCertificate', props.certificateArn);
         const zone = route53.HostedZone.fromLookup(this, 'Zone', {domainName: props.domainName});
@@ -71,7 +71,7 @@ export class LLBProApi extends Construct {
 
         new apigatewayv2.HttpApi(this, 'LLBPro-HttpApi', {
             apiName: 'LLBPro-API',
-            defaultIntegration: new aws_apigatewayv2_integrations.HttpLambdaIntegration("LLBPro-HttpLambdaIntegration", seedingLambda, {
+            defaultIntegration: new aws_apigatewayv2_integrations.HttpLambdaIntegration("LLBPro-HttpLambdaIntegration", apiLambda, {
                 timeout: Duration.seconds(20),
             }),
             corsPreflight: {
