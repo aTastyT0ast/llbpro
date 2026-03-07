@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from mangum import Mangum
@@ -8,8 +8,33 @@ from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 import os
 import json
+from typing import Optional
+from pydantic import BaseModel, Field
 
-app = FastAPI()
+app = FastAPI(
+    title="LLBlaze.Pro API",
+    version="1.0.0",
+    description="API for accessing data from LLBlaze.Pro",
+)
+
+
+class PlayerResponse(BaseModel):
+    surrogateId: str = Field(description="Player Id that is used in the path of the LLBlaze.Pro player profile URL. e.g. https://llblaze.pro/llb/players/{surrogateId})")
+    blazePlayerId: Optional[str] = Field(default=None, description="Internal id of the player in Glicko2 rating system for Blaze.")
+    l1PlayerId: Optional[str] = Field(default=None, description="Internal id of the player in Glicko2 rating system for LL.")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "surrogateId": "1",
+                    "blazePlayerId": "2",
+                    "l1PlayerId": "3",
+                }
+            ]
+        }
+    }
+
 
 @app.exception_handler(404)
 async def not_found_handler(request: Request, exc: HTTPException):
@@ -151,8 +176,46 @@ query getEventId($slug: String) {
     }
 
 
-@app.get("/players")
-async def get_players_by_query_params(steam_id: str = None, discord_id: str = None):
+@app.get(
+    "/players",
+    response_model=PlayerResponse,
+    summary="Look up a player by Steam or Discord ID",
+    description=(
+        "Returns the internal player IDs associated with the given Steam or Discord ID. "
+        "Either `steam_id` or `discord_id` must be provided."
+        "`steam_id` has a higher precedence if both are provided. "
+    ),
+    responses={
+        200: {
+            "description": "Player found – returns the player's internal IDs.",
+            "model": PlayerResponse,
+        },
+        204: {
+            "description": "No player found for the given ID.",
+        },
+        400: {
+            "description": "Neither `steam_id` nor `discord_id` was provided.",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Missing steam_id or discord_id query parameter"}
+                }
+            },
+        },
+    },
+    tags=["Players"],
+)
+async def get_players_by_query_params(
+    steam_id: Optional[str] = Query(
+        default=None,
+        description="64 bit Steam ID",
+        examples=["76561197972495328"],
+    ),
+    discord_id: Optional[str] = Query(
+        default=None,
+        description="Discord User ID",
+        examples=["123456789012345678"],
+    ),
+):
     if not steam_id and not discord_id:
         raise HTTPException(status_code=400, detail="Missing steam_id or discord_id query parameter")
 
@@ -175,3 +238,7 @@ async def get_players_by_query_params(steam_id: str = None, discord_id: str = No
 
 
 handler = Mangum(app, lifespan="off")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
