@@ -19,17 +19,17 @@ app = FastAPI(
 
 
 class PlayerResponse(BaseModel):
-    surrogateId: str = Field(description="Player Id that is used in the path of the LLBlaze.Pro player profile URL. e.g. https://llblaze.pro/llb/players/{surrogateId})")
-    blazePlayerId: Optional[str] = Field(default=None, description="Internal id of the player in Glicko2 rating system for Blaze.")
-    l1PlayerId: Optional[str] = Field(default=None, description="Internal id of the player in Glicko2 rating system for LL.")
+    surrogateId: int = Field(description="Player Id that is used in the path of the LLBlaze.Pro player profile URL. e.g. https://llblaze.pro/llb/players/{surrogateId})")
+    blazePlayerId: Optional[int] = Field(default=None, description="Internal id of the player in Glicko2 rating system for Blaze.")
+    l1PlayerId: Optional[int] = Field(default=None, description="Internal id of the player in Glicko2 rating system for LL.")
 
     model_config = {
         "json_schema_extra": {
             "examples": [
                 {
-                    "surrogateId": "1",
-                    "blazePlayerId": "2",
-                    "l1PlayerId": "3",
+                    "surrogateId": 1,
+                    "blazePlayerId": 2,
+                    "l1PlayerId": 3,
                 }
             ]
         }

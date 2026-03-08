@@ -5,7 +5,8 @@
   "main": "tourney_scraper.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "calc:all": "cd ranking-calculation && node ranking-setup.js && node ranking-setup-l1.js && node assign-surrogate-ids.js && node optimize_last.js && node optimize_last_l1.js && node export-players-json.js"
   },
   "author": "",
   "license": "ISC",
