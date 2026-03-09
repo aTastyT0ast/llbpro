@@ -1,12 +1,12 @@
 import {FC, useState} from "react";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group.tsx";
-import {Bean, ChartSpline, Crown, Scale} from "lucide-react";
+import {Bean, ChartSpline, Crown, Scale, Weight} from "lucide-react";
 import {Separator} from "@/components/ui/separator.tsx";
 import {ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent} from "@/components/ui/chart.tsx";
 import {Bar, BarChart, CartesianGrid, Cell, LabelList, YAxis} from "recharts";
 import {AxisDomain} from "recharts/types/util/types";
-import {FullPlayerData, Tourney, TourneyParticipant} from "@/state/GlobalStateProvider.tsx";
+import {FullPlayerData, Tourney, TourneyParticipant, TourneyType} from "@/state/GlobalStateProvider.tsx";
 import {useCombiState} from "@/hooks/useCombiState.ts";
 import {Platform} from "@/domain/Player.ts";
 
@@ -17,7 +17,8 @@ enum XDimension {
 
 enum YDimension {
     Rating = "Rating",
-    Diff = "Diff"
+    Diff = "Diff",
+    PlacementVsSeed = "PlacementVsSeed"
 }
 
 const chartConfig = {
@@ -28,15 +29,31 @@ const chartConfig = {
     diff: {
         label: "Diff",
         color: "hsl(var(--chart-2))",
+    },
+    placementVsSeed: {
+        label: "Placement vs Seed",
+        color: "hsl(var(--chart-2))",
     }
 } satisfies ChartConfig;
+
+const PLACEMENT_BOUNDARIES = [1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193];
+
+const expectedPlacementForSeed = (seed: number, tourneyType: TourneyType): number => {
+    if (tourneyType === TourneyType.ROUND_ROBIN) return seed;
+    for (let i = PLACEMENT_BOUNDARIES.length - 1; i >= 0; i--) {
+        if (seed >= PLACEMENT_BOUNDARIES[i]) return PLACEMENT_BOUNDARIES[i];
+    }
+    return 1;
+};
 
 interface ChartData {
     placement: number,
     seed: number,
     rating: number,
     diff: number,
+    placementVsSeed: number,
     label: string,
+    pvsSeedLabel: string,
 }
 
 interface PlacementBarChartProps {
@@ -73,19 +90,46 @@ export const PlacementBarChart: FC<PlacementBarChartProps> = (props) => {
                     ? player.glickoStats.rating - historyEntry.rating
                     : player.glickoHistory[nthTourney + 1].rating - historyEntry.rating;
 
+                const pvsSeed = expectedPlacementForSeed(p.seed, tourney.tourneyType) - p.placement;
                 return {
                     placement: p.placement,
                     seed: p.seed,
                     rating: historyEntry.rating - historyEntry.deviation * 2,
                     diff: diff,
-                    label: player.name
+                    placementVsSeed: pvsSeed,
+                    label: player.name,
+                    pvsSeedLabel: pvsSeed !== 0 ? player.name : "",
                 }
             }
         )
 
-    const yAxisDomain: AxisDomain = yScale === YDimension.Rating
-        ? [(dataMin: number) => dataMin - 20, (dataMax: number) => dataMax + 50]
-        : [(dataMin: number) => dataMin - 20, (dataMax: number) => dataMax + 20];
+    const getYAxisDomain = (): AxisDomain => {
+        switch (yScale) {
+            case YDimension.Rating:
+                return [(dataMin: number) => dataMin - 20, (dataMax: number) => dataMax + 50];
+            case YDimension.Diff:
+                return [(dataMin: number) => dataMin - 20, (dataMax: number) => dataMax + 20];
+            case YDimension.PlacementVsSeed:
+                return [(dataMin: number) => dataMin - 2, (dataMax: number) => dataMax + 2];
+        }
+    };
+
+    const getBarDataKey = (): string => {
+        switch (yScale) {
+            case YDimension.Rating:
+                return "rating";
+            case YDimension.Diff:
+                return "diff";
+            case YDimension.PlacementVsSeed:
+                return "placementVsSeed";
+        }
+    };
+
+    const getCellFill = (item: ChartData) => {
+        if (yScale === YDimension.Rating) return "hsl(var(--chart-1))";
+        const value = yScale === YDimension.Diff ? item.diff : item.placementVsSeed;
+        return value > 0 ? "hsl(var(--chart-2))" : "hsl(var(--chart-5))";
+    };
 
 
     return (
@@ -106,6 +150,11 @@ export const PlacementBarChart: FC<PlacementBarChartProps> = (props) => {
                                          className={"text-accent-foreground"}
                                          onClick={() => setYScale(YDimension.Diff)}>
                             <Scale className={"mr-1"}/>+/-
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value={YDimension.PlacementVsSeed}
+                                         className={"text-accent-foreground"}
+                                         onClick={() => setYScale(YDimension.PlacementVsSeed)}>
+                            <Weight className={"mr-1"}/>
                         </ToggleGroupItem>
                     </ToggleGroup>
                     <Separator className={"h-1/2"} orientation={"vertical"}/>
@@ -134,23 +183,17 @@ export const PlacementBarChart: FC<PlacementBarChartProps> = (props) => {
                         />
                         <YAxis
                             type={"number"}
-                            domain={yAxisDomain}
+                            domain={getYAxisDomain()}
                         />
-                        <Bar dataKey={yScale === YDimension.Rating ? "rating" : "diff"}>
+                        <Bar dataKey={getBarDataKey()}>
                             <LabelList position="top"
-                                       dataKey="label"
+                                       dataKey={yScale === YDimension.PlacementVsSeed ? "pvsSeedLabel" : "label"}
                                        fill={"white"}
                                        fillOpacity={1}/>
                             {chartData.map((item) => (
                                 <Cell
                                     key={item.seed}
-                                    fill={ // todo: use different color for rating
-                                        yScale === YDimension.Rating
-                                            ? "hsl(var(--chart-1))"
-                                            : item.diff > 0
-                                                ? "hsl(var(--chart-2))"
-                                                : "hsl(var(--chart-5))"
-                                    }
+                                    fill={getCellFill(item)}
                                 />
                             ))}
                         </Bar>
