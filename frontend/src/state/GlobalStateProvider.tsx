@@ -205,8 +205,9 @@ export interface FullMatchData {
 
 export enum TourneyType {
     DOUBLE_ELIM = 1,
-    TWO_STAGE = 2,
+    SINGLE_ELIM = 2,
     ROUND_ROBIN = 3,
+    SWISS = 4,
 }
 
 export interface Tourney {
@@ -217,6 +218,7 @@ export interface Tourney {
     date: Date,
     participants: TourneyParticipant[],
     tourneyType: TourneyType,
+    hasGroups: boolean,
     ytVods: string[],
     twitchVods: string[],
     prizepool: PrizePool | null,

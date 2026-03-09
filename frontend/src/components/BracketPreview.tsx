@@ -1,6 +1,6 @@
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
 import {LoaderPinwheel} from "lucide-react";
-import {Tourney, TourneyType} from "@/state/GlobalStateProvider.tsx";
+import {Tourney} from "@/state/GlobalStateProvider.tsx";
 import {FC, useState} from "react";
 
 export interface BracketPreviewProps {
@@ -11,7 +11,7 @@ export const BracketPreview: FC<BracketPreviewProps> = (props) => {
     const {tourney} = props;
     const [bracketLoading, setBracketLoading] = useState(true);
     const [bracketError, setBracketError] = useState(false);
-    const [poolsLoading, setPoolsLoading] = useState(tourney.tourneyType === TourneyType.TWO_STAGE);
+    const [poolsLoading, setPoolsLoading] = useState(tourney.hasGroups);
     const [poolsError, setPoolsError] = useState(false);
 
     return (
@@ -33,7 +33,7 @@ export const BracketPreview: FC<BracketPreviewProps> = (props) => {
                     }}
                 /> : <p>Bracket not available</p>}
                 {
-                    tourney.tourneyType === TourneyType.TWO_STAGE &&
+                    tourney.hasGroups &&
                     <>
                         {poolsLoading && !poolsError && <LoaderPinwheel className={"spin h-10 w-10"}/>}
                         {!poolsError ? <img

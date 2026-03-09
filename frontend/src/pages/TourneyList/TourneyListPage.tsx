@@ -37,6 +37,7 @@ export const TourneyListPage: FC = () => {
     const [nameFilter, setNameFilter] = useState<string>("");
     const [winnerFilter, setWinnerFilter] = useState<string>("");
     const [tourneyTypeFilter, setTourneyTypeFilter] = useState<TourneyType[]>([])
+    const [tourneyStagesFilter, setTourneyStagesFilter] = useState<boolean | undefined>(undefined)
     const [selectedPlatform, setSelectedPlatform] = useState<Platform | undefined>(undefined);
     const onTourneyClick = useTourneyNavigation();
 
@@ -124,6 +125,7 @@ export const TourneyListPage: FC = () => {
         .filter(tourney => winnerFilter === "" || tourney.winner?.name.toLowerCase().includes(winnerFilter.toLowerCase()))
         .filter(tourney => selectedPlatform === undefined || tourney.platform === selectedPlatform)
         .filter(tourney => tourneyTypeFilter.length === 0 || tourneyTypeFilter.includes(tourney.tourneyType))
+        .filter(tourney => tourneyStagesFilter === undefined || tourney.hasGroups === tourneyStagesFilter)
 
     const filterSelection = <>
         <DropdownMenuLabel>Tournament Name</DropdownMenuLabel>
@@ -166,15 +168,31 @@ export const TourneyListPage: FC = () => {
                      onValueChange={(types: string[]) => setTourneyTypeFilter(types.map(parseInt))}>
             <ToggleGroupItem value={TourneyType.DOUBLE_ELIM.toString()}
                              className={"w-16 h-16 text-accent-foreground"}>
-                Double Elimination
+                Double Elim
             </ToggleGroupItem>
-            <ToggleGroupItem value={TourneyType.TWO_STAGE.toString()}
+            <ToggleGroupItem value={TourneyType.SINGLE_ELIM.toString()}
                              className={"w-16 h-16 text-accent-foreground"}>
-                Two Stage
+                Single Elim
             </ToggleGroupItem>
             <ToggleGroupItem value={TourneyType.ROUND_ROBIN.toString()}
                              className={"w-16 h-16 text-accent-foreground"}>
                 Round Robin
+            </ToggleGroupItem>
+            <ToggleGroupItem value={TourneyType.SWISS.toString()}
+                             className={"w-16 h-16 text-accent-foreground"}>
+                Swiss
+            </ToggleGroupItem>
+        </ToggleGroup>
+        <ToggleGroup type={"single"}
+                     value={tourneyStagesFilter === undefined ? "" : tourneyStagesFilter ? "two" : "single"}
+                     onValueChange={(value: string) => setTourneyStagesFilter(value === "" ? undefined : value === "two")}>
+            <ToggleGroupItem value={"single"}
+                             className={"w-16 h-16 text-accent-foreground"}>
+                Single Stage
+            </ToggleGroupItem>
+            <ToggleGroupItem value={"two"}
+                             className={"w-16 h-16 text-accent-foreground"}>
+                Two Stages
             </ToggleGroupItem>
         </ToggleGroup>
     </>

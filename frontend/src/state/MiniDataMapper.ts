@@ -186,12 +186,13 @@ export type MiniTourney = [
         seed: number
     ][],
     tourneyType: number,
+    hasGroups: number,
     ytVods: string[],
     twitchVods: string[],
     prizepool: string
 ]
 export const mapMiniTourney = (platform: Platform) => (mini: MiniTourney): Tourney => {
-    const [id, name, url, date, participants, tourneyType, ytVods, twitchVods, prizepool] = mini;
+    const [id, name, url, date, participants, tourneyType, hasGroups, ytVods, twitchVods, prizepool] = mini;
 
     const full: Tourney = {
         id: convertBase64ToBase10(id) as TourneyId,
@@ -207,6 +208,7 @@ export const mapMiniTourney = (platform: Platform) => (mini: MiniTourney): Tourn
             seed: seed
         })),
         tourneyType,
+        hasGroups: hasGroups === 1,
         ytVods: ytVods ? ytVods : [],
         twitchVods: twitchVods ? twitchVods : [],
         prizepool: prizepool ? parsePrizePool(prizepool) : null

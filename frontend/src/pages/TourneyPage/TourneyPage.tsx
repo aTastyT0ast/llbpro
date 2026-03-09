@@ -1,5 +1,5 @@
 import {FC, useEffect, useState} from "react";
-import {useParams} from "react-router-dom";
+import {Link, useParams} from "react-router-dom";
 import {useCombiState} from "@/hooks/useCombiState.ts";
 import {LoadingSpinner} from "@/components/LoadingSpinner.tsx";
 import {Platform} from "@/domain/Player.ts";
@@ -10,7 +10,6 @@ import {getRatingDiffClassName} from "@/shared/stat-utils.ts";
 import {usePlayerNavigation} from "@/hooks/usePlayerNavigation.ts";
 import {getTime} from "@/shared/date-utils.ts";
 import {Award, Coins, Crown, ExternalLink, Rose, Tag} from "lucide-react";
-import {Link} from "react-router-dom";
 import {getRatingUpdate} from "@/shared/math-utils.ts";
 import {PlacementBarChart} from "@/components/PlacementBarChart.tsx";
 import challongeIcon from "@/assets/challonge.svg";
@@ -91,6 +90,18 @@ export const TourneyPage: FC = () => {
                 return "w-10 h-10";
         }
     }
+    const getTourneyTypeString = (tourneyType: number) => {
+        switch (tourneyType) {
+            case TourneyType.DOUBLE_ELIM:
+                return "Double Elimination";
+            case TourneyType.SINGLE_ELIM:
+                return "Single Elimination";
+            case TourneyType.ROUND_ROBIN:
+                return "Round Robin";
+            case TourneyType.SWISS:
+                return "Swiss";
+        }
+    }
 
     return (
         <div
@@ -109,6 +120,8 @@ export const TourneyPage: FC = () => {
                             <p>{tourney.participants.length} participants</p>
                             <p>URL: <a target={"_blank"} href={tourney.url}>{tourney.url}<ExternalLink
                                 className="ml-1 pb-1 inline"/></a></p>
+                            <p>Tournament Type: {tourney.hasGroups ? "Two Stages, " : "Single Stage, "
+                            } {getTourneyTypeString(tourney.tourneyType)}</p>
                         </CardContent>
                     </Card>
                     <Card>

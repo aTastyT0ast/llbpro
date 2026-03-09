@@ -36,12 +36,19 @@ const chartConfig = {
     }
 } satisfies ChartConfig;
 
-const PLACEMENT_BOUNDARIES = [1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193];
+const PLACEMENT_BOUNDARIES_DOUBLE_ELIM = [1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193];
+const PLACEMENT_BOUNDARIES_SINGLE_ELIM = [1, 2, 3, 4, 5, 9];
 
 const expectedPlacementForSeed = (seed: number, tourneyType: TourneyType): number => {
-    if (tourneyType === TourneyType.ROUND_ROBIN) return seed;
-    for (let i = PLACEMENT_BOUNDARIES.length - 1; i >= 0; i--) {
-        if (seed >= PLACEMENT_BOUNDARIES[i]) return PLACEMENT_BOUNDARIES[i];
+    if (tourneyType === TourneyType.ROUND_ROBIN || tourneyType === TourneyType.SWISS) return seed;
+    if (tourneyType === TourneyType.SINGLE_ELIM) {
+        for (let i = PLACEMENT_BOUNDARIES_SINGLE_ELIM.length - 1; i >= 0; i--) {
+            if (seed >= PLACEMENT_BOUNDARIES_SINGLE_ELIM[i]) return PLACEMENT_BOUNDARIES_SINGLE_ELIM[i];
+        }
+        return 1;
+    }
+    for (let i = PLACEMENT_BOUNDARIES_DOUBLE_ELIM.length - 1; i >= 0; i--) {
+        if (seed >= PLACEMENT_BOUNDARIES_DOUBLE_ELIM[i]) return PLACEMENT_BOUNDARIES_DOUBLE_ELIM[i];
     }
     return 1;
 };

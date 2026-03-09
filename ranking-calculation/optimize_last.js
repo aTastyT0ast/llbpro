@@ -300,11 +300,13 @@ const optiCh = chTourneys.map(({tournament, ytVods, twitchVods, prizepool}) => {
         ]
     });
 
-    let tourneyType = 1; // normal tourney without groups/pools
-    if (group_stages_enabled === true) {
+    let tourneyType = 1; // double elim
+    if (tournament_type === "single elimination") {
         tourneyType = 2;
     } else if (tournament_type === "round robin") {
         tourneyType = 3;
+    } else if (tournament_type === "swiss") {
+        tourneyType = 4;
     }
 
     return [
@@ -314,6 +316,7 @@ const optiCh = chTourneys.map(({tournament, ytVods, twitchVods, prizepool}) => {
         convertBase10ToBase64(new Date(started_at || start_at).getTime()),
         shortParts,
         tourneyType,
+        group_stages_enabled ? 1 : 0,
         ytVods,
         twitchVods,
         prizepool
@@ -384,7 +387,8 @@ const optiGG = ggTourneys.map((entry) => {
         "https://start.gg/" + slug,
         convertBase10ToBase64(date.getTime()),
         shortParts,
-        null,
+        1, // TODO
+        0, // TODO
         entry.ytVods,
         entry.twitchVods,
         prizepool
