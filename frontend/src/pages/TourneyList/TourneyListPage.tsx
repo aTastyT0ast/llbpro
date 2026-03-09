@@ -1,11 +1,11 @@
 import {FC, useEffect, useState} from "react";
 import './TourneyListPage.css';
-import {getDateStringFromDate} from "../../shared/date-utils.ts";
+import {getDateStringFromDate} from "@/shared/date-utils.ts";
 import ggIcon from '../../assets/gg.svg';
 import challongeIcon from '../../assets/challonge.svg';
-import {Platform} from "../../domain/Player.ts";
-import {PrizePool, Tourney} from "../../state/GlobalStateProvider.tsx";
-import {SortOrder} from "../../shared/math-utils.ts";
+import {Platform} from "@/domain/Player.ts";
+import {PrizePool, Tourney, TourneyType} from "../../state/GlobalStateProvider.tsx";
+import {SortOrder} from "@/shared/math-utils.ts";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table.tsx";
 import {ArrowDown, ArrowUp, Filter, Video} from "lucide-react";
 import {LoadingSpinner} from "@/components/LoadingSpinner.tsx";
@@ -36,6 +36,7 @@ export const TourneyListPage: FC = () => {
     const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.DESC);
     const [nameFilter, setNameFilter] = useState<string>("");
     const [winnerFilter, setWinnerFilter] = useState<string>("");
+    const [tourneyTypeFilter, setTourneyTypeFilter] = useState<TourneyType[]>([])
     const [selectedPlatform, setSelectedPlatform] = useState<Platform | undefined>(undefined);
     const onTourneyClick = useTourneyNavigation();
 
@@ -121,7 +122,8 @@ export const TourneyListPage: FC = () => {
         })
         .filter(tourney => nameFilter === "" || tourney.name.toLowerCase().includes(nameFilter.toLowerCase()))
         .filter(tourney => winnerFilter === "" || tourney.winner?.name.toLowerCase().includes(winnerFilter.toLowerCase()))
-        .filter(tourney => selectedPlatform === undefined || tourney.platform === selectedPlatform);
+        .filter(tourney => selectedPlatform === undefined || tourney.platform === selectedPlatform)
+        .filter(tourney => tourneyTypeFilter.length === 0 || tourneyTypeFilter.includes(tourney.tourneyType))
 
     const filterSelection = <>
         <DropdownMenuLabel>Tournament Name</DropdownMenuLabel>
@@ -156,6 +158,23 @@ export const TourneyListPage: FC = () => {
             <ToggleGroupItem value={Platform.CUSTOM}
                              className={"w-16 h-16 text-accent-foreground"}>
                 Custom
+            </ToggleGroupItem>
+        </ToggleGroup>
+        <DropdownMenuLabel>Tournament Type</DropdownMenuLabel>
+        <DropdownMenuSeparator/>
+        <ToggleGroup type={"multiple"} value={tourneyTypeFilter.map(String)}
+                     onValueChange={(types: string[]) => setTourneyTypeFilter(types.map(parseInt))}>
+            <ToggleGroupItem value={TourneyType.DOUBLE_ELIM.toString()}
+                             className={"w-16 h-16 text-accent-foreground"}>
+                Double Elimination
+            </ToggleGroupItem>
+            <ToggleGroupItem value={TourneyType.TWO_STAGE.toString()}
+                             className={"w-16 h-16 text-accent-foreground"}>
+                Two Stage
+            </ToggleGroupItem>
+            <ToggleGroupItem value={TourneyType.ROUND_ROBIN.toString()}
+                             className={"w-16 h-16 text-accent-foreground"}>
+                Round Robin
             </ToggleGroupItem>
         </ToggleGroup>
     </>
