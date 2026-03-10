@@ -1,7 +1,7 @@
 import {FC, useMemo, useState} from "react";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group.tsx";
-import {Bean, ChartSpline, Crown, Scale, Weight, WeightTilde} from "lucide-react";
+import {Bean, ChartSpline, CircleHelp, Crown, Scale, Weight, WeightTilde} from "lucide-react";
 import {Separator} from "@/components/ui/separator.tsx";
 import {ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent} from "@/components/ui/chart.tsx";
 import {Bar, BarChart, CartesianGrid, Cell, LabelList, YAxis} from "recharts";
@@ -9,6 +9,7 @@ import {AxisDomain} from "recharts/types/util/types";
 import {FullPlayerData, Tourney, TourneyType} from "@/state/GlobalStateProvider.tsx";
 import {useCombiState} from "@/hooks/useCombiState.ts";
 import {Platform} from "@/domain/Player.ts";
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip.tsx";
 
 enum XDimension {
     Placement = "Placement",
@@ -200,12 +201,12 @@ export const PlacementBarChart: FC<PlacementBarChartProps> = (props) => {
                         <ToggleGroupItem value={YDimension.Rating}
                                          className={"text-accent-foreground"}
                                          onClick={() => setYScale(YDimension.Rating)}>
-                            <ChartSpline className={"mr-1"}/>Rating
+                            <ChartSpline className={"mr-1"}/>
                         </ToggleGroupItem>
                         <ToggleGroupItem value={YDimension.Diff}
                                          className={"text-accent-foreground"}
                                          onClick={() => setYScale(YDimension.Diff)}>
-                            <Scale className={"mr-1"}/>+/-
+                            <Scale className={"mr-1"}/>
                         </ToggleGroupItem>
                         <ToggleGroupItem value={YDimension.PlacementVsSeed}
                                          className={"text-accent-foreground"}
@@ -224,19 +225,39 @@ export const PlacementBarChart: FC<PlacementBarChartProps> = (props) => {
                         <ToggleGroupItem value={XDimension.Placement}
                                          className={"text-accent-foreground"}
                                          onClick={() => setXScale(XDimension.Placement)}>
-                            <Crown className={"mr-1"}/>Placement
+                            <Crown className={"mr-1"}/>
                         </ToggleGroupItem>
                         <ToggleGroupItem value={XDimension.Seed}
                                          className={"text-accent-foreground"}
                                          onClick={() => setXScale(XDimension.Seed)}>
-                            <Bean className={"mr-1"}/>Seed
+                            <Bean className={"mr-1"}/>
                         </ToggleGroupItem>
                         <ToggleGroupItem value={XDimension.Rating}
                                          className={"text-accent-foreground"}
                                          onClick={() => setXScale(XDimension.Rating)}>
-                            <ChartSpline className={"mr-1"}/>Rating
+                            <ChartSpline className={"mr-1"}/>
                         </ToggleGroupItem>
                     </ToggleGroup>
+                    <Separator className={"h-1/2"} orientation={"vertical"}/>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <CircleHelp className={"size-8 text-accent-foreground ml-2"}/>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <div className={"flex flex-col gap-2"}>
+                                    <div className={"flex"}><Crown className={"mr-1"}/> Placement</div>
+                                    <div className={"flex"}><Bean className={"mr-1"}/> Seed</div>
+                                    <div className={"flex"}><ChartSpline className={"mr-1"}/> Rating</div>
+                                    <div className={"flex"}><Scale className={"mr-1"}/> Rating Diff after Tournament
+                                    </div>
+                                    <div className={"flex"}><Weight className={"mr-1"}/> Placement vs Seed</div>
+                                    <div className={"flex"}><WeightTilde className={"mr-1"}/> Placement vs Proposed Seed
+                                    </div>
+                                </div>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 </div>
             </CardHeader>
             <CardContent>
