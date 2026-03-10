@@ -222,7 +222,7 @@ const parsePrizePool = (prizePoolStr: string): PrizePool => {
     if (prizePoolStr.includes("€")) {
         currency = Currency.EUR;
         payouts = prizePoolStr.split("/").map(p => parseFloat(p.replace("€", "")));
-    } else if (prizePoolStr.includes("€")) {
+    } else if (prizePoolStr.includes("£")) {
         currency = Currency.BP;
         payouts = prizePoolStr.split("/").map(p => parseFloat(p.replace("£", "")));
     } else {

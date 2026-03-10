@@ -4,7 +4,7 @@ import {getDateStringFromDate} from "@/shared/date-utils.ts";
 import ggIcon from '../../assets/gg.svg';
 import challongeIcon from '../../assets/challonge.svg';
 import {Platform} from "@/domain/Player.ts";
-import {PrizePool, Tourney, TourneyType} from "../../state/GlobalStateProvider.tsx";
+import {Currency, PrizePool, Tourney, TourneyType} from "../../state/GlobalStateProvider.tsx";
 import {SortOrder} from "@/shared/math-utils.ts";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table.tsx";
 import {ArrowDown, ArrowUp, Filter, Video} from "lucide-react";

@@ -26,5 +26,4 @@ const events = await promiseAllWithDelay(lines, 650, async (line) => {
 console.log("");
 console.log(events.length);
 
-// currently not used because lungbreaker too big
-writeJsonToFile(events, "all_gg_tourneys_l1_hmm.json");
+writeJsonToFile(events, "all_gg_tourneys_l1.json");
