@@ -329,7 +329,7 @@ fs.writeFileSync("../frontend/public/fflate_ch.json.gz", compressedCh, {encoding
 const ggTourneysSourceLines = String(fs.readFileSync("../gg/gg_tourneys.csv")).split('\r\n');
 const ggTourneys = JSON.parse(String(fs.readFileSync("../gg/all_gg_tourneys.json")));
 const optiGG = ggTourneys.map((entry) => {
-    const {id, tournament, slug, startAt, standings} = entry.event;
+    const {id, tournament, slug, startAt, standings, phases} = entry.event;
 
     const shortParts = standings.nodes.map((standing) => {
         const {placement, entrant, player} = standing;
@@ -381,14 +381,28 @@ const optiGG = ggTourneys.map((entry) => {
     const prizepoolString = correctLine.split(',')[3];
     const prizepool = prizepoolString ? prizepoolString : null;
 
+    let tourneyType = 1; // default to double elim
+    const sortedPhases = [...phases].sort((a, b) => a.phaseOrder - b.phaseOrder);
+    const lastPhase = sortedPhases[sortedPhases.length - 1];
+    if (lastPhase.bracketType === "SINGLE_ELIMINATION") {
+        tourneyType = 2;
+    } else if (lastPhase.bracketType === "ROUND_ROBIN") {
+        tourneyType = 3;
+    } else if (lastPhase.bracketType === "SWISS") {
+        tourneyType = 4;
+    }
+
+    const firstPhase = sortedPhases[0];
+    const hasGroupStage = phases.length > 1 && firstPhase.bracketType !== "SINGLE_ELIMINATION" && firstPhase.bracketType !== "DOUBLE_ELIMINATION";
+
     return [
         convertBase10ToBase64(id),
         tournament.name,
         "https://start.gg/" + slug,
         convertBase10ToBase64(date.getTime()),
         shortParts,
-        1, // TODO
-        0, // TODO
+        tourneyType,
+        hasGroupStage ? 1 : 0,
         entry.ytVods,
         entry.twitchVods,
         prizepool

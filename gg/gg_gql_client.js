@@ -58,7 +58,7 @@ query getEventId($slug: String) {
 }
 
 export const fetchGGTourneyWithPlayer = async (slug) => {
-    const eventQuery = gql`
+    const baseQuery = gql`
 query getEventId($slug: String) {
   event(slug: $slug) {
     id
@@ -67,22 +67,13 @@ query getEventId($slug: String) {
     }
     slug
     startAt
-    sets(perPage: 100) {
-      nodes {
-        id
-        completedAt
-        winnerId
-        displayScore
-        slots {
-          entrant {
-            id
-          }
-        }
-      }
+    phases {
+      name
+      bracketType
+      phaseOrder
     }
-    
     standings(query: {
-      perPage: 100
+      perPage: 512
     }) {
       nodes {
         placement
@@ -113,7 +104,43 @@ query getEventId($slug: String) {
 }
 `
 
-    return await client.request(eventQuery, {"slug": slug})
+    const setsQuery = gql`
+query getEventSets($slug: String, $page: Int) {
+  event(slug: $slug) {
+    sets(perPage: 50, page: $page) {
+      pageInfo {
+        totalPages
+      }
+      nodes {
+        id
+        completedAt
+        winnerId
+        displayScore
+        slots {
+          entrant {
+            id
+          }
+        }
+      }
+    }
+  }
+}
+`
+
+    const baseResult = await client.request(baseQuery, {"slug": slug})
+
+    const allSetNodes = []
+    let page = 1
+    while (true) {
+        const setsResult = await client.request(setsQuery, {"slug": slug, "page": page})
+        const setsData = setsResult.event.sets
+        allSetNodes.push(...setsData.nodes)
+        if (page >= setsData.pageInfo.totalPages) break
+        page++
+    }
+
+    baseResult.event.sets = {nodes: allSetNodes}
+    return baseResult
 }
 
 export const fetchGGEntrants = async (slug) => {

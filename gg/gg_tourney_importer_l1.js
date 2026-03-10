@@ -3,14 +3,24 @@ import {fetchGGTourneyWithPlayer} from "./gg_gql_client.js";
 import {promiseAllWithDelay, writeJsonToFile} from "../utils.js";
 
 const buffer = fs.readFileSync("gg_tourneys_l1.csv");
-const urls = String(buffer).split('\r\n');
-const eventSlugs = urls.map(url => url.split(".gg/")[1]);
+const lines = String(buffer).split('\r\n');
 
-console.log("Importing " + eventSlugs.length + " events");
+console.log("Importing " + lines.length + " events");
 
-const events = await promiseAllWithDelay(eventSlugs, 650, async (slug) => {
+const events = await promiseAllWithDelay(lines, 650, async (line) => {
+    const [url, ytVods, twitchVods] = line.split(',');
+    const slug = url.split(".gg/")[1];
     process.stdout.write(".");
-    return await fetchGGTourneyWithPlayer(slug);
+    const event = await fetchGGTourneyWithPlayer(slug);
+    if (!event.event) {
+        console.log("Event not found: " + slug);
+    }
+
+    return {
+        ...event,
+        ytVods: !ytVods ? [] : ytVods.split(';').map(v => v.trim()).filter(v => !!v),
+        twitchVods: !twitchVods ? [] : twitchVods.split(';').map(v => v.trim()).filter(v => !!v),
+    };
 });
 
 console.log("");

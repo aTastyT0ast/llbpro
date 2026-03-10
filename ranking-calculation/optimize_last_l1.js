@@ -34,11 +34,11 @@ export const roundedPercentage = (value) => {
 
 function shortenChallongeAvatarUrl(fullUrl) {
     if (fullUrl.startsWith("https://user-assets.challonge.com/users/images/")) {
-        return "1"+fullUrl.split("images/")[1];
+        return "1" + fullUrl.split("images/")[1];
     }
 
     if (fullUrl.startsWith("https://secure.gravatar.com/avatar/")) {
-        return "2"+fullUrl.split("?")[0].split("avatar/")[1];
+        return "2" + fullUrl.split("?")[0].split("avatar/")[1];
     }
 
     throw new Error("Unknown challonge avatar url format: " + fullUrl);
@@ -276,7 +276,7 @@ fs.writeFileSync("../frontend/public/fflate_ch_l1.json.gz", compressedCh, {encod
 
 const ggTourneys = JSON.parse(String(fs.readFileSync("../gg/all_gg_tourneys_l1.json")));
 const optiGG = ggTourneys.map((entry) => {
-    const {id, tournament, slug, startAt, standings} = entry.event;
+    const {id, tournament, slug, startAt, standings, phases} = entry.event;
 
     const shortParts = standings.nodes.map((standing) => {
         const {placement, entrant, player} = standing;
@@ -316,14 +316,28 @@ const optiGG = ggTourneys.map((entry) => {
     const date = new Date(0);
     date.setUTCSeconds(startAt)
 
+    let tourneyType = 1; // default to double elim
+    const sortedPhases = [...phases].sort((a, b) => a.phaseOrder - b.phaseOrder);
+    const lastPhase = sortedPhases[sortedPhases.length - 1];
+    if (lastPhase.bracketType === "SINGLE_ELIMINATION") {
+        tourneyType = 2;
+    } else if (lastPhase.bracketType === "ROUND_ROBIN") {
+        tourneyType = 3;
+    } else if (lastPhase.bracketType === "SWISS") {
+        tourneyType = 4;
+    }
+
+    const firstPhase = sortedPhases[0];
+    const hasGroupStage = phases.length > 1 && firstPhase.bracketType !== "SINGLE_ELIMINATION" && firstPhase.bracketType !== "DOUBLE_ELIMINATION";
+
     return [
         convertBase10ToBase64(id),
         tournament.name,
         "https://start.gg/" + slug,
         convertBase10ToBase64(date.getTime()),
         shortParts,
-        1, // TODO
-        0, // TODO
+        tourneyType,
+        hasGroupStage ? 1 : 0,
         entry.ytVods,
         entry.twitchVods,
         null // prizepool, there are none in GG YET, might have to do this for mach 2
