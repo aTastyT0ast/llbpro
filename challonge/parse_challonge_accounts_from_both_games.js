@@ -2,28 +2,15 @@ import fs from "fs";
 import {writeJsonToFile} from "../utils.js";
 
 
-
-export const chTourneys = JSON.parse(String(fs.readFileSync("minimal_challonge_tourneys.json")));
-export const chTourneys_l1 = JSON.parse(String(fs.readFileSync("minimal_challonge_tourneys_l1.json")));
+const chTourneys = JSON.parse(String(fs.readFileSync("minimal_challonge_tourneys.json")));
+const chTourneys_l1 = JSON.parse(String(fs.readFileSync("minimal_challonge_tourneys_l1.json")));
 
 const players = new Map();
 
-chTourneys.forEach(t => {
-    t.tournament.participants
-        .filter(p => !!p.participant.challonge_user_id)
-        .forEach(({participant: p}) => {
-        const key = p.challonge_user_id;
-        if (!players.has(key)) {
-            players.set(key, {
-                challonge_username: p.challonge_username,
-                challonge_user_id: p.challonge_user_id,
-                attached_participatable_portrait_url: p.attached_participatable_portrait_url,
-            });
-        }
-    });
-});
+const tourneys = [...chTourneys, ...chTourneys_l1]
+    .sort((a, b) => new Date(b.tournament.started_at) - new Date(a.tournament.started_at));
 
-chTourneys_l1.forEach(t => {
+tourneys.forEach(t => {
     t.tournament.participants
         .filter(p => !!p.participant.challonge_user_id)
         .forEach(({participant: p}) => {

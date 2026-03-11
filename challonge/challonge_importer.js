@@ -1,10 +1,6 @@
 import fs from "fs";
 import {chunkPromises} from "../utils.js";
 
-const buffer = fs.readFileSync("challonge_tourneys.csv");
-const csvLines = String(buffer).split('\n');
-csvLines.shift();
-
 const CHALLONGE_USERNAME = process.env.CHALLONGE_USERNAME;
 const API_KEY = process.env.CHALLONGE_API_KEY;
 
@@ -17,21 +13,27 @@ if (!API_KEY) {
     process.exit(1);
 }
 
+const archive = JSON.parse(String(fs.readFileSync("all_challonge_tourneys.json")));
+
+const buffer = fs.readFileSync("challonge_tourneys.csv");
+const csvLines = String(buffer).split('\n');
+csvLines.shift();
+
 const challongeAuth = {
     "Authorization": "Basic " + btoa(CHALLONGE_USERNAME + ":" + API_KEY)
 }
 
-async function fetchChallongeTourney(name, subdomain) {
-    let id = name;
+async function fetchChallongeTourney(url, subdomain) {
+    let id = url;
     if (subdomain) {
-        id = subdomain + "-" + name;
+        id = subdomain + "-" + url;
     }
     const response = await fetch("https://api.challonge.com/v1/tournaments/" + id + ".json?include_participants=1&include_matches=1", {
         headers: challongeAuth
     });
 
     if (response.status !== 200) {
-        console.log("Failed to fetch " + name);
+        console.log("Failed to fetch " + url);
         return;
     }
     process.stdout.write(".");
@@ -41,9 +43,16 @@ async function fetchChallongeTourney(name, subdomain) {
 
 console.log(csvLines.length);
 
-const tourneys2 = (await chunkPromises(csvLines, 10, async (line) => {
-    const [, name, subdomain, ytVods, twitchVods, prizepool] = line.split(',');
-    const response = await fetchChallongeTourney(name, subdomain);
+const tourneys = (await chunkPromises(csvLines, 10, async (line) => {
+    const [, url, subdomain, ytVods, twitchVods, prizepool] = line.split(',');
+
+    const alreadyImportedTourney = archive.find(({tournament}) => tournament.url.toLowerCase() === url.toLowerCase());
+    if (alreadyImportedTourney) {
+        return alreadyImportedTourney;
+    }
+
+    console.log("Importing new tournament" + url);
+    const response = await fetchChallongeTourney(url, subdomain);
     return {
         ...response,
         ytVods: !ytVods ? [] : ytVods.split(';').map(v => v.trim()).filter(v => !!v),
@@ -52,4 +61,4 @@ const tourneys2 = (await chunkPromises(csvLines, 10, async (line) => {
     };
 })).filter(t => !!t);
 
-fs.writeFileSync("all_challonge_tourneys.json", JSON.stringify(tourneys2));
+fs.writeFileSync("all_challonge_tourneys.json", JSON.stringify(tourneys));
