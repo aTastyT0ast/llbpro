@@ -80,10 +80,9 @@ function LeaderBoardPage() {
     const playableCharacters = getPlayableCharacters(game);
     const [columns, setColumns] = useState<OptionalColumn[]>([
         OptionalColumn.RATING_LB_95,
-        OptionalColumn.RATING,
-        OptionalColumn.DEVIATION,
-        OptionalColumn.VOLATILITY,
-        OptionalColumn.TOURNEY_COUNT
+        OptionalColumn.TOURNEY_COUNT,
+        OptionalColumn.MATCH_WINRATE,
+        OptionalColumn.DAYS_SINCE_LAST_TOURNEY,
     ]);
 
     useEffect(() => {

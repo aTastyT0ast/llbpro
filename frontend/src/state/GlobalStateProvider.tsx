@@ -21,12 +21,14 @@ type GlobalStateType = {
 
 const GlobalStateContext = createContext<GlobalStateType>({
     correctMapping: undefined,
-    rankedMatches: undefined
+    rankedMatches: undefined,
+    tourneys: undefined,
 });
 
 const GlobalStateContextL1 = createContext<GlobalStateType>({
     correctMapping: undefined,
-    rankedMatches: undefined
+    rankedMatches: undefined,
+    tourneys: undefined,
 });
 
 export const useGlobalState = () => {
@@ -77,9 +79,14 @@ export const GlobalStateProvider: FC<OptionalChildren> = ({children}) => {
             });
     }, []);
 
+    let tourneys = undefined;
+    if (challongeTourneys.length > 0 && ggTourneys.length > 0) {
+        tourneys = [...challongeTourneys, ...ggTourneys];
+    }
+
     return (
         <GlobalStateContext.Provider
-            value={{correctMapping, rankedMatches, tourneys: [...challongeTourneys, ...ggTourneys]}}>
+            value={{correctMapping, rankedMatches, tourneys}}>
             {children}
         </GlobalStateContext.Provider>
     );
@@ -129,9 +136,14 @@ export const GlobalStateProviderL1: FC<OptionalChildren> = ({children}) => {
             });
     }, []);
 
+    let tourneys = undefined;
+    if (challongeTourneys.length > 0 && ggTourneys.length > 0 && customTourneys.length > 0) {
+        tourneys = [...challongeTourneys, ...ggTourneys, ...customTourneys];
+    }
+
     return (
         <GlobalStateContextL1.Provider
-            value={{correctMapping, rankedMatches, tourneys: [...challongeTourneys, ...ggTourneys, ...customTourneys]}}>
+            value={{correctMapping, rankedMatches, tourneys}}>
             {children}
         </GlobalStateContextL1.Provider>
     );

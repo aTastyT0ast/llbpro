@@ -5,15 +5,20 @@ const buffer = fs.readFileSync("challonge_tourneys.csv");
 const csvLines = String(buffer).split('\n');
 csvLines.shift();
 
+const CHALLONGE_USERNAME = process.env.CHALLONGE_USERNAME;
 const API_KEY = process.env.CHALLONGE_API_KEY;
 
+if (!CHALLONGE_USERNAME) {
+    console.log("Missing CHALLONGE_USERNAME");
+    process.exit(1);
+}
 if (!API_KEY) {
     console.log("Missing Challonge API key");
     process.exit(1);
 }
 
 const challongeAuth = {
-    "Authorization": "Basic " + btoa("atastyt0ast:" + API_KEY)
+    "Authorization": "Basic " + btoa(CHALLONGE_USERNAME + ":" + API_KEY)
 }
 
 async function fetchChallongeTourney(name, subdomain) {
