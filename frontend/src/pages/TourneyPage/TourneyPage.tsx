@@ -11,7 +11,7 @@ import {usePlayerNavigation} from "@/hooks/usePlayerNavigation.ts";
 import {getTime} from "@/shared/date-utils.ts";
 import {Award, Coins, Crown, ExternalLink, Rose, Tag} from "lucide-react";
 import {getRatingUpdate} from "@/shared/math-utils.ts";
-import {PlacementBarChart} from "@/components/PlacementBarChart.tsx";
+import {expectedPlacementForSeed, PlacementBarChart} from "@/components/PlacementBarChart.tsx";
 import challongeIcon from "@/assets/challonge.svg";
 import ggIcon from "@/assets/gg.svg";
 import {BracketPreview} from "@/components/BracketPreview.tsx";
@@ -103,6 +103,37 @@ export const TourneyPage: FC = () => {
         }
     }
 
+    const participantDecayedRatings = tourney.participants
+        .map(p => {
+            const player = correctMapping.find(pl => pl.playerId === p.playerId)!;
+            const historyEntry = player.glickoHistory.find(h => h.tourney.id === tourney.id && h.tourney.platform === platform);
+            const decayedRating = historyEntry
+                ? historyEntry.rating - historyEntry.deviation * 2
+                : player.glickoStats.rating - player.glickoStats.deviation * 2;
+            return {playerId: p.playerId, decayedRating};
+        })
+        .sort((a, b) => b.decayedRating - a.decayedRating)
+
+    const seedingDiffs = tourney.participants
+        .map(p => {
+            const pvs = expectedPlacementForSeed(p.seed, tourney.tourneyType) - p.placement;
+            const proposedSeed = participantDecayedRatings.findIndex(r => r.playerId === p.playerId) + 1;
+            const pvps = expectedPlacementForSeed(proposedSeed, tourney.tourneyType) - p.placement;
+            return {placementVsSeed: pvs, placementVsProposedSeed: pvps};
+        });
+
+    const worstPossibleSeedingScore = Array.from({length: tourney.participants.length}, (_, i) => i + 1)
+        .reduce((sum, placement) => {
+            const worstSeed = tourney.participants.length + 1 - placement;
+            return sum + Math.abs(expectedPlacementForSeed(worstSeed, tourney.tourneyType) - placement);
+        }, 0);
+
+    const seedingScore = seedingDiffs.reduce((acc, {placementVsSeed}) => acc + Math.abs(placementVsSeed), 0);
+    const proposedSeedingScore = seedingDiffs.reduce((acc, {placementVsProposedSeed}) => acc + Math.abs(placementVsProposedSeed), 0);
+
+    const seedingAccuracy = 1 - seedingScore / worstPossibleSeedingScore;
+    const proposedSeedingAccuracy = 1 - proposedSeedingScore / worstPossibleSeedingScore;
+
     return (
         <div
             className={"px-4 text-xxl overflow-y-auto flex flex-col items-center w-[100vw]  mb-[142px] iphone-bottom-padding"}>
@@ -122,6 +153,14 @@ export const TourneyPage: FC = () => {
                                 className="ml-1 pb-1 inline"/></a></p>
                             <p>Tournament Type: {tourney.hasGroups ? "Two Stages, " : "Single Stage, "
                             } {getTourneyTypeString(tourney.tourneyType)}</p>
+                            {
+                                tourney.tourneyType !== TourneyType.ROUND_ROBIN && (
+                                    <>
+                                        <p>Seeding accuracy: {Math.round(seedingAccuracy * 100)}%</p>
+                                        <p>Proposed seeding accuracy: {Math.round(proposedSeedingAccuracy * 100)}%</p>
+                                    </>
+                                )
+                            }
                         </CardContent>
                     </Card>
                     <Card>
@@ -345,7 +384,10 @@ export const TourneyPage: FC = () => {
                     </Card>
                 </div>
             </div>
-            {tourney.platform === Platform.Challonge && <BracketPreview tourney={tourney}/>}
+            {
+                tourney.platform === Platform.Challonge && <BracketPreview tourney={tourney}/>
+            }
         </div>
-    );
+    )
+        ;
 }
