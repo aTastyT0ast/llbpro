@@ -22,12 +22,15 @@ import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group.tsx";
 import {Input} from "@/components/ui/input.tsx";
 import {comparePrizePools} from "@/shared/prize-utils.ts";
 import {SITE_TITLE} from "@/shared/constants.ts";
+import {expectedPlacementForSeed} from "@/components/PlacementBarChart.tsx";
 
 enum Sorter {
     NAME = "name",
     DATE = "date",
     COUNT = "count",
-    PRIZEPOOL = "prizepool"
+    PRIZEPOOL = "prizepool",
+    SCORE1 = "score1",
+    SCORE2 = "score2",
 }
 
 export const TourneyListPage: FC = () => {
@@ -58,7 +61,45 @@ export const TourneyListPage: FC = () => {
         }
     }
 
-    const sortFunc = (a: Tourney, b: Tourney) => {
+    const computeWorstEval = (tourney: Tourney) => {
+        const n = tourney.participants.length;
+        return Array.from({length: n}, (_, i) => i + 1).reduce((sum, placement) => {
+            const worstSeed = n + 1 - placement;
+            return sum + Math.abs(expectedPlacementForSeed(worstSeed, tourney.tourneyType) - placement);
+        }, 0);
+    };
+
+    const computeScore1 = (tourney: Tourney): number | null => {
+        if (tourney.platform === Platform.CUSTOM) return null;
+        const worstEval = computeWorstEval(tourney);
+        if (worstEval === 0) return null;
+        const seedingEval = tourney.participants.reduce((acc, p) =>
+            acc + Math.abs(expectedPlacementForSeed(p.seed, tourney.tourneyType) - p.placement), 0);
+        return 1 - seedingEval / worstEval;
+    };
+
+    const computeScore2 = (tourney: Tourney): number | null => {
+        if (tourney.platform === Platform.CUSTOM) return null;
+        const worstEval = computeWorstEval(tourney);
+        if (worstEval === 0) return null;
+        const decayedRatings = tourney.participants
+            .map(p => {
+                const player = correctMapping.find(pl => pl.playerId === p.playerId);
+                const historyEntry = player?.glickoHistory.find(h => h.tourney.id === tourney.id && h.tourney.platform === tourney.platform);
+                const decayedRating = historyEntry
+                    ? historyEntry.rating - historyEntry.deviation * 2
+                    : (player ? player.glickoStats.rating - player.glickoStats.deviation * 2 : 1100);
+                return {playerId: p.playerId, decayedRating};
+            })
+            .sort((a, b) => b.decayedRating - a.decayedRating);
+        const seedingEval = tourney.participants.reduce((acc, p) => {
+            const proposedSeed = decayedRatings.findIndex(r => r.playerId === p.playerId) + 1;
+            return acc + Math.abs(expectedPlacementForSeed(proposedSeed, tourney.tourneyType) - p.placement);
+        }, 0);
+        return 1 - seedingEval / worstEval;
+    };
+
+    const sortFunc = (a: Tourney & { score1: number | null, score2: number | null }, b: Tourney & { score1: number | null, score2: number | null }) => {
         const sortOrderFactor = sortOrder === SortOrder.DESC ? 1 : -1;
 
         switch (currentSorter) {
@@ -70,6 +111,10 @@ export const TourneyListPage: FC = () => {
                 return sortOrderFactor * (b.participants.length - a.participants.length);
             case Sorter.PRIZEPOOL:
                 return sortOrderFactor * comparePrizePools(a, b);
+            case Sorter.SCORE1:
+                return sortOrderFactor * ((b.score1 ?? -1) - (a.score1 ?? -1));
+            case Sorter.SCORE2:
+                return sortOrderFactor * ((b.score2 ?? -1) - (a.score2 ?? -1));
         }
     }
 
@@ -119,6 +164,8 @@ export const TourneyListPage: FC = () => {
             return ({
                 ...tourney,
                 winner,
+                score1: computeScore1(tourney),
+                score2: computeScore2(tourney),
             });
         })
         .filter(tourney => nameFilter === "" || tourney.name.toLowerCase().includes(nameFilter.toLowerCase()))
@@ -126,6 +173,11 @@ export const TourneyListPage: FC = () => {
         .filter(tourney => selectedPlatform === undefined || tourney.platform === selectedPlatform)
         .filter(tourney => tourneyTypeFilter.length === 0 || tourneyTypeFilter.includes(tourney.tourneyType))
         .filter(tourney => tourneyStagesFilter === undefined || tourney.hasGroups === tourneyStagesFilter)
+
+    const score1Values = filteredTourneys.filter(t => t.participants.length >= 3).map(t => t.score1).filter(s => s !== null) as number[];
+    const score2Values = filteredTourneys.filter(t => t.participants.length >= 3).map(t => t.score2).filter(s => s !== null) as number[];
+    const avgScore1 = score1Values.length > 0 ? score1Values.reduce((a, b) => a + b, 0) / score1Values.length : null;
+    const avgScore2 = score2Values.length > 0 ? score2Values.reduce((a, b) => a + b, 0) / score2Values.length : null;
 
     const filterSelection = <>
         <DropdownMenuLabel>Tournament Name</DropdownMenuLabel>
@@ -200,6 +252,10 @@ export const TourneyListPage: FC = () => {
     return (
         <>
             <h1 className={"my-8"}>Tournaments</h1>
+            <div className={"flex gap-6 mb-4 text-sm text-muted-foreground"}>
+                <span>Avg. Seeding: <strong>{avgScore1 !== null ? `${Math.round(avgScore1 * 100)}%` : "-"}</strong></span>
+                <span>Avg. Prop. Seeding: <strong>{avgScore2 !== null ? `${Math.round(avgScore2 * 100)}%` : "-"}</strong></span>
+            </div>
             <div className={"flex mb-4"}><DropdownMenu>
                 <DropdownMenuTrigger asChild className={"cursor-pointer"}><Filter/></DropdownMenuTrigger>
                 <DropdownMenuContent className={"dark p-4"}>
@@ -217,6 +273,8 @@ export const TourneyListPage: FC = () => {
                             <TableHead>Winner</TableHead>
                             {tableHeadCell(Sorter.COUNT, "Participants")}
                             {tableHeadCell(Sorter.PRIZEPOOL, "Prizepool")}
+                            {tableHeadCell(Sorter.SCORE1, "Seeding")}
+                            {tableHeadCell(Sorter.SCORE2, "Prop. Seeding")}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -235,6 +293,8 @@ export const TourneyListPage: FC = () => {
                                     <TableCell>{tourney.winner?.name}</TableCell>
                                     <TableCell>{tourney.participants.length}</TableCell>
                                     <TableCell>{prizepoolContent(tourney.prizepool)}</TableCell>
+                                    <TableCell>{tourney.score1 !== null ? `${Math.round(tourney.score1 * 100)}%` : "-"}</TableCell>
+                                    <TableCell>{tourney.score2 !== null ? `${Math.round(tourney.score2 * 100)}%` : "-"}</TableCell>
                                 </TableRow>
                             ))}
                     </TableBody>

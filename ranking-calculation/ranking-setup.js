@@ -720,3 +720,82 @@ fs.writeFileSync("all_ranked_matches.json", JSON.stringify(allRankedMatchesByTou
 fs.writeFileSync("../frontend/src/assets/env.json", JSON.stringify({"last-modified": new Date().toISOString()}))
 
 console.log("Done. DQ matches: " + dqCount);
+//
+// // ---- Average proposed seeding accuracy ----
+// const CALC_BOUNDARIES_DE = [1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193];
+// const CALC_BOUNDARIES_SE = [1, 2, 3, 4, 5, 9];
+//
+// const getExpectedPlacementForSeed = (seed, isSingleElim, isSwiss = false) => {
+//     if (isSwiss) return seed;
+//     const boundaries = isSingleElim ? CALC_BOUNDARIES_SE : CALC_BOUNDARIES_DE;
+//     for (let i = boundaries.length - 1; i >= 0; i--) {
+//         if (seed >= boundaries[i]) return boundaries[i];
+//     }
+//     return 1;
+// };
+//
+// const calcProposedSeedingAccuracy = (entries, isSingleElim, isSwiss = false) => {
+//     const n = entries.length;
+//     if (n < 3) return null;
+//     const worstEval = Array.from({length: n}, (_, i) => i + 1)
+//         .reduce((sum, placement) => sum + Math.abs(getExpectedPlacementForSeed(n + 1 - placement, isSingleElim, isSwiss) - placement), 0);
+//     if (worstEval === 0) return null;
+//     const ranked = [...entries].sort((a, b) => b.decayedRating - a.decayedRating);
+//     const seedingEval = entries.reduce((acc, p) => {
+//         const proposedSeed = ranked.findIndex(r => r.glickoId === p.glickoId) + 1;
+//         return acc + Math.abs(getExpectedPlacementForSeed(proposedSeed, isSingleElim, isSwiss) - p.placement);
+//     }, 0);
+//     return 1 - seedingEval / worstEval;
+// };
+//
+// const proposedSeedingScores = [];
+//
+// for (const chTourney of chTourneys) {
+//     const t = chTourney.tournament;
+//     const typeStr = (t.tournament_type ?? "").toLowerCase();
+//     if (typeStr === "round robin") continue;
+//     const isSingleElim = typeStr === "single elimination";
+//     const isSwiss = typeStr === "swiss";
+//
+//     const evaluatendumTourney = chTourneysEvaluatendum.find(et => et.id === t.id);
+//     if (!evaluatendumTourney) continue;
+//
+//     const participants = evaluatendumTourney.participants.filter(p => evaluatendumTourney.matches.some(m => m.player1_id === p.id || m.player2_id === p.id));
+//
+//     const entries = participants.map(p => {
+//         const player = findPlayerForChParticipant(p.id, correctMapping, evaluatendumTourney);
+//         const historyEntry = player.glickoHistory.find(h => h.tourney.id === t.id && h.tourney.platform === "Challonge");
+//         // if (!historyEntry) return null;
+//         return {glickoId: player.id, placement: p.final_rank, decayedRating: historyEntry.rating - 2 * historyEntry.deviation};
+//     }).filter(Boolean);
+//
+//     const score = calcProposedSeedingAccuracy(entries, isSingleElim, isSwiss);
+//     if (score !== null) proposedSeedingScores.push(score);
+// }
+//
+// for (const ggTourney of ggTourneys) {
+//     const event = ggTourney.event;
+//     const standings = event.standings.nodes;
+//
+//     const entries = standings.map(s => {
+//         const glickoPlayer = getGlickoPlayerForGGParticipant(s.entrant.id, correctMapping, standings, () => null);
+//         if (!glickoPlayer) return null;
+//         const player = findMappedPlayerForGlickoId(glickoPlayer.id);
+//         if (!player || !player.glickoPlayer) return null;
+//         const historyEntry = player.glickoHistory.find(h => h.tourney.id === event.id && h.tourney.platform === "GG");
+//         if (!historyEntry) return null;
+//         return {glickoId: glickoPlayer.id, placement: s.placement, decayedRating: historyEntry.rating - 2 * historyEntry.deviation};
+//     }).filter(Boolean);
+//
+//     const score = calcProposedSeedingAccuracy(entries, false); // GG tournaments are double elim
+//     if (score !== null) proposedSeedingScores.push(score);
+// }
+//
+// const avgProposedSeedingAccuracy = proposedSeedingScores.length > 0
+//     ? proposedSeedingScores.reduce((a, b) => a + b, 0) / proposedSeedingScores.length
+//     : null;
+//
+// console.log(`Average proposed seeding accuracy: ${avgProposedSeedingAccuracy !== null ? Math.round(avgProposedSeedingAccuracy * 100) + "%" : "N/A"} (over ${proposedSeedingScores.length} tournaments)`);
+//
+//
+
