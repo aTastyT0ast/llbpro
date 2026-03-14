@@ -62,7 +62,7 @@ export const createPlayer = (ranking, challongeIds, theirTourneys, isL1 = false)
                 t.tourney.url.toLowerCase().includes("npc")
             );
             if (hasAtLeastOneNPC) {
-                console.log("blaze later newbie???: ", blazePlayer.displayName);
+                console.log("has played in NPC later in Blaze: ", blazePlayer?.displayName);
                 return ranking.makePlayer(1250, 150);
             }
         }

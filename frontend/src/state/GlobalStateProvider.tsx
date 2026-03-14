@@ -200,19 +200,21 @@ export interface GlickoHistoryEntry extends GlickoStats {
     rank: number
 }
 
+export type Match = {
+    player1: PlayerId,
+    player2: PlayerId,
+    player1Prediction: number,
+    hasPlayer1Won: boolean,
+    date: Date
+};
+
 export interface FullMatchData {
     tourney: {
         date: Date,
         id: TourneyId,
         platform: Platform
     }
-    matches: {
-        player1: PlayerId,
-        player2: PlayerId,
-        player1Prediction: number,
-        hasPlayer1Won: boolean,
-        date: Date
-    }[]
+    matches: Match[]
 }
 
 export enum TourneyType {

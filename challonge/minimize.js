@@ -9,6 +9,7 @@ const mapper = ({tournament: t, ytVods, twitchVods, prizepool}) => ({
         id: t.id,
         name: t.name,
         url: t.url,
+        tournament_type: t.tournament_type,
         started_at: t.started_at,
         completed_at: t.completed_at,
         state: t.state,

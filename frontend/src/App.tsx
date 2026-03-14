@@ -12,6 +12,7 @@ import {ImprintPage} from "@/pages/ImprintPage/ImprintPage.tsx";
 import {Footer} from "@/components/Footer.tsx";
 import {TourneyPage} from "@/pages/TourneyPage/TourneyPage.tsx";
 import {ParryPage} from "@/pages/ParryPage/ParryPage.tsx";
+import {PlayerMatchupsPage} from "@/pages/PlayerMatchupPage/PlayerMatchupsPage.tsx";
 
 function App() {
     const routedPage = (page: ReactNode) => {
@@ -32,6 +33,7 @@ function App() {
                 <Route path="/" element={routedPage(<LeaderBoardPage/>)}/>
                 <Route path="/:game" element={routedPage(<LeaderBoardPage/>)}/>
                 <Route path="/:game/players/:playerId" element={routedPage(<PlayerPage/>)}/>
+                <Route path="/:game/players/:playerId/matchups" element={routedPage(<PlayerMatchupsPage/>)}/>
                 <Route path="/:game/tournaments" element={routedPage(<TourneyListPage/>)}/>
                 <Route path="/:game/tournaments/:platform/:tourneyId" element={routedPage(<TourneyPage/>)}/>
                 <Route path="/:game/head2head" element={routedPage(<Head2HeadPage/>)}/>

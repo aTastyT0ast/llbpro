@@ -9,6 +9,9 @@ import {LoadingImage} from "@/components/LoadingImage.tsx";
 import {Country, getCountryFlag} from "@/domain/Country.ts";
 import {Rose, Tag} from "lucide-react";
 import {Belt, getBeltColor} from "@/domain/Belt.ts";
+import {BlazeButton} from "@/components/BlazeButton.tsx";
+import {useNavigate} from "react-router-dom";
+import {useGameParams} from "@/hooks/useGameParams.ts";
 
 interface PlayerProfileProps {
     player: Player,
@@ -17,6 +20,8 @@ interface PlayerProfileProps {
 
 export const PlayerProfile: FC<PlayerProfileProps> = (props) => {
     const {player, currentRank} = props;
+    const navigate = useNavigate();
+    const game = useGameParams();
 
     const challongeAccountCards = player.challonge.accounts.map(account => {
         const link = "https://challonge.com/users/" + account.challongeUsername
@@ -114,6 +119,10 @@ export const PlayerProfile: FC<PlayerProfileProps> = (props) => {
                     </div>
                     <ScrollBar orientation="horizontal"/>
                 </ScrollArea>
+
+                <BlazeButton label={"Show all matchups"} onClick={() => {
+                    navigate(`/${game}/players/${player.surrogateId}/matchups`)
+                }}/>
             </CardContent>
 
             {/*{*/}
