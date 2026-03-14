@@ -201,9 +201,11 @@ fs.writeFileSync("../frontend/public/fflate_matches_l1.json.gz", compressedMatch
 // --- tourney data
 
 const chTourneys = JSON.parse(String(fs.readFileSync("../challonge/l1_challonge_tourneys.json")));
-const optiCh = chTourneys.map(({tournament, ytVods, twitchVods, prizepool}) => {
+const chTourneysSourceLines = String(fs.readFileSync("../challonge/challonge_tourneys_l1.csv")).split('\n');
+
+const optiCh = chTourneys.map(({tournament}) => {
     const {
-        id, name, started_at, start_at, full_challonge_url, participants, group_stages_enabled,
+        id, name, started_at, start_at, full_challonge_url, participants, group_stages_enabled, url,
         tournament_type
     } = tournament;
 
@@ -257,6 +259,18 @@ const optiCh = chTourneys.map(({tournament, ytVods, twitchVods, prizepool}) => {
         tourneyType = 4;
     }
 
+    const correctLine = chTourneysSourceLines.find((line) => {
+        const [,csvName] = line.split(',');
+        return csvName.toLowerCase() === url.toLowerCase()
+    });
+
+    if (!correctLine) {
+        throw new Error("Could not find source line for ch tourney with name: " + name);
+    }
+
+    const [,,,ytVods,twitchVods,prizepoolString] = correctLine.split(',');
+    const prizepool = prizepoolString ? prizepoolString : null;
+
     return [
         convertBase10ToBase64(id),
         name,
@@ -265,8 +279,8 @@ const optiCh = chTourneys.map(({tournament, ytVods, twitchVods, prizepool}) => {
         shortParts,
         tourneyType,
         group_stages_enabled ? 1 : 0,
-        ytVods,
-        twitchVods,
+        !ytVods ? [] : ytVods.split(';').map(v => v.trim()).filter(v => !!v),
+        !twitchVods ? [] : twitchVods.split(';').map(v => v.trim()).filter(v => !!v),
         prizepool
     ]
 });
@@ -275,6 +289,8 @@ const compressedCh = gzipSync(Buffer.from(JSON.stringify(optiCh), "utf-8"));
 fs.writeFileSync("../frontend/public/fflate_ch_l1.json.gz", compressedCh, {encoding: "utf-8"});
 
 const ggTourneys = JSON.parse(String(fs.readFileSync("../gg/all_gg_tourneys_l1.json")));
+const ggTourneysSourceLines = String(fs.readFileSync("../gg/gg_tourneys_l1.csv")).split('\r\n');
+
 const optiGG = ggTourneys.map((entry) => {
     const {id, tournament, slug, startAt, standings, phases} = entry.event;
 
@@ -316,6 +332,19 @@ const optiGG = ggTourneys.map((entry) => {
     const date = new Date(0);
     date.setUTCSeconds(startAt)
 
+    const correctLine = ggTourneysSourceLines.find((line) => {
+        const [url] = line.split(',');
+        const slugFromUrl = url.split("start.gg/")[1];
+        return slugFromUrl === slug;
+    });
+
+    if (!correctLine) {
+        throw new Error("Could not find source line for gg tourney with slug: " + slug);
+    }
+
+    const [,ytVods,twitchVods,prizepoolString] = correctLine.split(',');
+    const prizepool = prizepoolString ? prizepoolString : null;
+
     let tourneyType = 1; // default to double elim
     const sortedPhases = [...phases].sort((a, b) => a.phaseOrder - b.phaseOrder);
     const lastPhase = sortedPhases[sortedPhases.length - 1];
@@ -338,9 +367,9 @@ const optiGG = ggTourneys.map((entry) => {
         shortParts,
         tourneyType,
         hasGroupStage ? 1 : 0,
-        entry.ytVods,
-        entry.twitchVods,
-        null // prizepool, there are none in GG YET, might have to do this for mach 2
+        !ytVods ? [] : ytVods.split(';').map(v => v.trim()).filter(v => !!v),
+        !twitchVods ? [] : twitchVods.split(';').map(v => v.trim()).filter(v => !!v),
+        prizepool
     ]
 });
 

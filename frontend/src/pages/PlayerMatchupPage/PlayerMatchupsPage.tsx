@@ -154,10 +154,10 @@ export const PlayerMatchupsPage: FC = () => {
 
     return (
         <div
-            className={"px-4 text-xxl overflow-y-auto flex flex-col items-center w-full mb-[142px] iphone-bottom-padding"}>
+            className={"px-4 text-xxl overflow-y-auto flex flex-col w-full mb-[142px] iphone-bottom-padding"}>
             <h1 className={"my-8"}>{player.name} - Matchups</h1>
             <Card>
-                <CardHeader className={"flex-row justify-between"}>
+                <CardHeader className={"flex-row justify-between flex-wrap"}>
                     <BlazeButton
                         onClick={() => navigate(`/${game}/players/${player.surrogateId}`)}
                         label={"Back to profile"}

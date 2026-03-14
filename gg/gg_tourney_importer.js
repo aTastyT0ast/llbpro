@@ -8,7 +8,7 @@ const lines = String(buffer).split('\r\n');
 console.log("Importing " + lines.length + " events");
 
 const events = await promiseAllWithDelay(lines, 650, async (line) => {
-    const [url, ytVods, twitchVods] = line.split(',');
+    const [url] = line.split(',');
     const slug = url.split(".gg/")[1];
     process.stdout.write(".");
     const event = await fetchGGTourneyWithPlayer(slug);
@@ -16,11 +16,7 @@ const events = await promiseAllWithDelay(lines, 650, async (line) => {
         console.log("Event not found: " + slug);
     }
 
-    return {
-        ...event,
-        ytVods: !ytVods ? [] : ytVods.split(';').map(v => v.trim()).filter(v => !!v),
-        twitchVods: !twitchVods ? [] : twitchVods.split(';').map(v => v.trim()).filter(v => !!v),
-    };
+    return event;
 });
 
 console.log("");

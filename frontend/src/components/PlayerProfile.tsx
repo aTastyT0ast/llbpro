@@ -1,4 +1,4 @@
-import {FC} from "react";
+import {FC, useEffect} from "react";
 import {Platform, Player} from "../domain/Player.ts";
 import {AccountCard} from "./AccountCard.tsx";
 import './PlayerProfile.css';
@@ -22,6 +22,10 @@ export const PlayerProfile: FC<PlayerProfileProps> = (props) => {
     const {player, currentRank} = props;
     const navigate = useNavigate();
     const game = useGameParams();
+
+    useEffect(() => {
+
+    }, []);
 
     const challongeAccountCards = player.challonge.accounts.map(account => {
         const link = "https://challonge.com/users/" + account.challongeUsername

@@ -46,25 +46,3 @@ const dqOnly = [...players.values()].filter(p =>
 );
 
 writeJsonToFile([...players.values()], "all_gg_players.json");
-//
-// let iterableIterator1 = [...players.values()]
-// let iterableIterator = new Set(iterableIterator1).values();
-// // writeArrayToFile([...iterableIterator].map(p => p.gamerTag).sort((a, b) => a.localeCompare(b)), "all_unregistered_player_names.txt");
-// writeJsonToFile([...iterableIterator]
-//         .sort((a, b) => a.gamerTag.localeCompare(b.gamerTag))
-//         .map(p => {
-//             if (p.user?.discriminator) {
-//                 return {
-//                     a: p.gamerTag,
-//                     b: "https://start.gg/user/" + p.user.discriminator
-//                 }
-//             } else {
-//                 return {
-//                     a: p.gamerTag
-//                 }
-//             }
-//         }),
-//     "_todo.json"
-// );
-//
-//

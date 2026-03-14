@@ -44,7 +44,7 @@ async function fetchChallongeTourney(url, subdomain) {
 console.log(csvLines.length);
 
 const tourneys2 = (await chunkPromises(csvLines, 10, async (line) => {
-    const [, url, subdomain, ytVods, twitchVods, prizepool] = line.split(',');
+    const [, url, subdomain] = line.split(',');
 
     const alreadyImportedTourney = archive.find(({tournament}) => tournament.url.toLowerCase() === url.toLowerCase());
     if (alreadyImportedTourney) {
@@ -52,13 +52,7 @@ const tourneys2 = (await chunkPromises(csvLines, 10, async (line) => {
     }
 
     console.log("Importing new tournament" + url);
-    const response = await fetchChallongeTourney(url, subdomain);
-    return {
-        ...response,
-        ytVods: !ytVods ? [] : ytVods.split(';').map(v => v.trim()).filter(v => !!v),
-        twitchVods: !twitchVods ? [] : twitchVods.split(';').map(v => v.trim()).filter(v => !!v),
-        prizepool: !prizepool ? null : prizepool
-    };
+    return await fetchChallongeTourney(url, subdomain);
 })).filter(t => !!t);
 
 fs.writeFileSync("l1_challonge_tourneys.json", JSON.stringify(tourneys2));

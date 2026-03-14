@@ -214,12 +214,15 @@ fs.writeFileSync("../frontend/public/fflate_matches.json.gz", compressedMatches,
 // --- tourney data
 
 const chTourneys = JSON.parse(String(fs.readFileSync("../challonge/all_challonge_tourneys.json")));
-const optiCh = chTourneys.map(({tournament, ytVods, twitchVods, prizepool}) => {
+const chTourneysSourceLines = String(fs.readFileSync("../challonge/challonge_tourneys.csv")).split('\n');
+
+const optiCh = chTourneys.map(({tournament}) => {
     const {
         id,
         name,
         started_at,
         start_at,
+        url,
         full_challonge_url,
         participants,
         group_stages_enabled,
@@ -309,6 +312,18 @@ const optiCh = chTourneys.map(({tournament, ytVods, twitchVods, prizepool}) => {
         tourneyType = 4;
     }
 
+    const correctLine = chTourneysSourceLines.find((line) => {
+        const [,csvName] = line.split(',');
+        return csvName.toLowerCase() === url.toLowerCase()
+    });
+
+    if (!correctLine) {
+        throw new Error("Could not find source line for ch tourney with name: " + url);
+    }
+
+    const [,,,ytVods,twitchVods,prizepoolString] = correctLine.split(',');
+    const prizepool = prizepoolString ? prizepoolString : null;
+
     return [
         convertBase10ToBase64(id),
         name,
@@ -317,8 +332,8 @@ const optiCh = chTourneys.map(({tournament, ytVods, twitchVods, prizepool}) => {
         shortParts,
         tourneyType,
         group_stages_enabled ? 1 : 0,
-        ytVods,
-        twitchVods,
+        !ytVods ? [] : ytVods.split(';').map(v => v.trim()).filter(v => !!v),
+        !twitchVods ? [] : twitchVods.split(';').map(v => v.trim()).filter(v => !!v),
         prizepool
     ]
 });
@@ -378,7 +393,7 @@ const optiGG = ggTourneys.map((entry) => {
         throw new Error("Could not find source line for gg tourney with slug: " + slug);
     }
 
-    const prizepoolString = correctLine.split(',')[3];
+    const [,ytVods,twitchVods,prizepoolString] = correctLine.split(',');
     const prizepool = prizepoolString ? prizepoolString : null;
 
     let tourneyType = 1; // default to double elim
@@ -403,8 +418,8 @@ const optiGG = ggTourneys.map((entry) => {
         shortParts,
         tourneyType,
         hasGroupStage ? 1 : 0,
-        entry.ytVods,
-        entry.twitchVods,
+        !ytVods ? [] : ytVods.split(';').map(v => v.trim()).filter(v => !!v),
+        !twitchVods ? [] : twitchVods.split(';').map(v => v.trim()).filter(v => !!v),
         prizepool
     ]
 });
