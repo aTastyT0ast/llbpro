@@ -30,6 +30,22 @@ button.blaze:hover {
     transform: skewX(-10deg) translateX(10px);
 }
 
+button.blaze.disabled {
+    opacity: 0.5;
+}
+
+button.blaze.disabled:hover {
+    transform: skewX(-10deg);
+    transition: none;
+    background-color: black;
+    color: white;
+    border-bottom: white 4px solid;
+    border-right: white 8px solid;
+    filter: drop-shadow(4px 0px 0px black) drop-shadow(4px 0px 0px white) drop-shadow(4px 0px 0px black);
+    -webkit-filter: drop-shadow(4px 0px 0px black) drop-shadow(4px 0px 0px white) drop-shadow(4px 0px 0px black);
+    cursor: not-allowed;
+}
+
 button.blaze p {
     transform: skewX(10deg);
     margin: 0;
@@ -64,4 +80,15 @@ button.ll1:hover {
     color: white;
     transition: transform 0.1s ease;
     transform: skewX(45deg) translateX(10px);
+}
+
+button.ll1.disabled {
+    opacity: 0.5;
+}
+
+button.ll1.disabled:hover {
+    color: #af190b;
+    transition: none;
+    transform: skewX(45deg);
+    cursor: not-allowed;
 }

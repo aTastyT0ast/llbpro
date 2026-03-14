@@ -1,13 +1,17 @@
-import {FC, useState} from "react";
-import {Card, CardContent} from "@/components/ui/card.tsx";
+import {FC, useEffect, useState} from "react";
+import {Card, CardContent, CardHeader} from "@/components/ui/card.tsx";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table.tsx";
-import {useParams, useSearchParams} from "react-router-dom";
+import {useNavigate, useParams, useSearchParams} from "react-router-dom";
 import {useCombiState} from "@/hooks/useCombiState.ts";
 import {LoadingSpinner} from "@/components/LoadingSpinner.tsx";
 import {Match, SurrogateId} from "@/state/GlobalStateProvider.tsx";
 import {getRatingUpdate, predict, SortOrder} from "@/shared/math-utils.ts";
 import {ArrowDown, ArrowUp} from "lucide-react";
 import {DestinationPage, usePlayerNavigation} from "@/hooks/usePlayerNavigation.ts";
+import {Checkbox} from "@/components/ui/checkbox.tsx";
+import {BlazeButton} from "@/components/BlazeButton.tsx";
+import {useGameParams} from "@/hooks/useGameParams.ts";
+import {SITE_TITLE} from "@/shared/constants.ts";
 
 type MatchUpStats = {
     opponentName: string,
@@ -30,19 +34,33 @@ export const PlayerMatchupsPage: FC = () => {
     const {correctMapping, rankedMatches, tourneys} = useCombiState();
     const [currentSorter, setCurrentSorter] = useState<Sorter>(Sorter.MATCHES);
     const onPlayerClick = usePlayerNavigation();
-
     const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.DESC);
-
-
-    if (!correctMapping || !rankedMatches || !tourneys || tourneys.length === 0) {
-        return <LoadingSpinner/>
-    }
+    const [selectedPlayerIds, setSelectedPlayerIds] = useState<SurrogateId[]>([])
+    const game = useGameParams();
+    const navigate = useNavigate();
 
     let playerId = undefined;
     if (typeof playerIdString === "string") {
         playerId = parseInt(playerIdString);
     }
     const player = correctMapping?.find(player => player.surrogateId === playerId);
+
+    useEffect(() => {
+        setSelectedPlayerIds([]);
+    }, [game]);
+
+    useEffect(() => {
+        if (player) {
+            document.title = `${player.name} | Matchups - ${SITE_TITLE}`;
+        } else {
+            document.title = SITE_TITLE;
+        }
+    }, [correctMapping, game, playerId]);
+
+    if (!correctMapping || !rankedMatches || !tourneys || tourneys.length === 0) {
+        return <LoadingSpinner/>
+    }
+
     if (!player || playerId === undefined) {
         return <div>Player not found</div>
     }
@@ -129,7 +147,7 @@ export const PlayerMatchupsPage: FC = () => {
     }
 
     const getPercentageColor = (percentage: number) => {
-        const red = Math.round(255 * (1- percentage));
+        const red = Math.round(255 * (1 - percentage));
         const green = Math.round(255 * percentage);
         return `rgb(${red},${green},0)`;
     }
@@ -139,10 +157,24 @@ export const PlayerMatchupsPage: FC = () => {
             className={"px-4 text-xxl overflow-y-auto flex flex-col items-center w-full mb-[142px] iphone-bottom-padding"}>
             <h1 className={"my-8"}>{player.name} - Matchups</h1>
             <Card>
+                <CardHeader className={"flex-row justify-between"}>
+                    <BlazeButton
+                        onClick={() => navigate(`/${game}/players/${player.surrogateId}`)}
+                        label={"Back to profile"}
+                    ></BlazeButton>
+                    <BlazeButton
+                        disabled={selectedPlayerIds.length === 0}
+                        onClick={() => {
+                            navigate(`/${game}/head2head?playerIds=${[player!.surrogateId, ...selectedPlayerIds].join()}`)
+                        }}
+                        label={"Open Head2Head stats"}
+                    ></BlazeButton>
+                </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead>H2H</TableHead>
                                 <TableHead>Opponent</TableHead>
                                 {tableHeadCell(Sorter.MATCHES, "Matches #")}
                                 <TableHead>Standing</TableHead>
@@ -159,11 +191,24 @@ export const PlayerMatchupsPage: FC = () => {
                                 const winRate = wins / matchUpStats.matches.length;
                                 return (
                                     <TableRow key={matchUpStats.opponentId}>
-                                        <TableCell onClick={onPlayerClick(matchUpStats.opponentId, DestinationPage.MATCHUPS)} className={"cursor-pointer hover-highlight"}>{matchUpStats.opponentName}</TableCell>
+                                        <TableCell><Checkbox
+                                            checked={selectedPlayerIds.includes(matchUpStats.opponentId)}
+                                            onCheckedChange={(checked) => {
+                                                if (checked) {
+                                                    setSelectedPlayerIds([...selectedPlayerIds, matchUpStats.opponentId]);
+                                                } else {
+                                                    setSelectedPlayerIds(selectedPlayerIds.filter(id => id !== matchUpStats.opponentId));
+                                                }
+                                            }}/></TableCell>
+                                        <TableCell
+                                            onClick={onPlayerClick(matchUpStats.opponentId, DestinationPage.MATCHUPS)}
+                                            className={"cursor-pointer hover-highlight"}>{matchUpStats.opponentName}</TableCell>
                                         <TableCell>{matchUpStats.matches.length}</TableCell>
                                         <TableCell>{wins}-{losses}</TableCell>
-                                        <TableCell style={{color: getPercentageColor(winRate)}}>{Math.round(winRate * 100)}%</TableCell>
-                                        <TableCell style={{color: getPercentageColor(matchUpStats.prediction)}}>{Math.round(matchUpStats.prediction * 100)}%</TableCell>
+                                        <TableCell
+                                            style={{color: getPercentageColor(winRate)}}>{Math.round(winRate * 100)}%</TableCell>
+                                        <TableCell
+                                            style={{color: getPercentageColor(matchUpStats.prediction)}}>{Math.round(matchUpStats.prediction * 100)}%</TableCell>
                                         <TableCell>+{matchUpStats.ratingWager[0]} / {matchUpStats.ratingWager[1]}</TableCell>
                                         <TableCell>{Math.round(matchUpStats.daysSinceLastMatch)} days ago</TableCell>
                                     </TableRow>

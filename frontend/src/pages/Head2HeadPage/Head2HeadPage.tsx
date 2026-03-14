@@ -16,7 +16,7 @@ import {useCrossPlayer} from "@/hooks/useCrossPlayer.ts";
 import {useTourneyNavigation} from "@/hooks/useTourneyNavigation.ts";
 import {Platform} from "@/domain/Player.ts";
 import {getDateString} from "@/shared/date-utils.ts";
-import {useLocation, useSearchParams} from "react-router-dom";
+import {useSearchParams} from "react-router-dom";
 import {SITE_TITLE} from "@/shared/constants.ts";
 import {PlayerId, SurrogateId, TourneyId} from "@/state/GlobalStateProvider.tsx";
 import {useSurrogateId} from "@/hooks/useSurrogateId.ts";

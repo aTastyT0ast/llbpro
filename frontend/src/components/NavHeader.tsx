@@ -22,8 +22,8 @@ export const NavHeader: FC = () => {
             ? currentPath.replace('/ll', '/llb')
             : currentPath.replace('/llb', '/ll');
 
-        if (newPath.includes("/players")) {
-            const surrogateId = Number(newPath.split("/").pop()) as SurrogateId;
+        if (newPath.includes("/players/")) {
+            const surrogateId = Number(newPath.split("/players/").pop()?.split("/")[0]) as SurrogateId;
 
             const isPlayingTargetGame = isCrossPlayer(surrogateId);
 
