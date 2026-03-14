@@ -16,7 +16,7 @@ import {useCrossPlayer} from "@/hooks/useCrossPlayer.ts";
 import {useTourneyNavigation} from "@/hooks/useTourneyNavigation.ts";
 import {Platform} from "@/domain/Player.ts";
 import {getDateString} from "@/shared/date-utils.ts";
-import {useLocation} from "react-router-dom";
+import {useLocation, useSearchParams} from "react-router-dom";
 import {SITE_TITLE} from "@/shared/constants.ts";
 import {PlayerId, SurrogateId, TourneyId} from "@/state/GlobalStateProvider.tsx";
 import {useSurrogateId} from "@/hooks/useSurrogateId.ts";
@@ -66,9 +66,9 @@ export const Head2HeadPage: FC = () => {
     const onPlayerClick = usePlayerNavigation();
     const onTourneyClick = useTourneyNavigation();
     const getSurrogateId = useSurrogateId();
-    const location = useLocation();
+    const [searchParams, setSearchParams] = useSearchParams();
 
-    const playerIdsParams = new URLSearchParams(location.search).get('playerIds');
+    const playerIdsParams = searchParams.get('playerIds');
     const surrogateIds = playerIdsParams?.split(",").map(id => parseInt(id) as SurrogateId).filter(id => !isNaN(id)) ?? [];
 
     let initiallySelectedSIds: (SurrogateId | undefined)[] = [undefined, undefined];
@@ -109,6 +109,18 @@ export const Head2HeadPage: FC = () => {
             const newPlayers = [...prev];
             newPlayers[index] = id;
             return newPlayers;
+        });
+        setSearchParams(prev => {
+            const newParams = new URLSearchParams(prev);
+            const newSelectedSIds = [...selectedSIds];
+            newSelectedSIds[index] = id;
+            const filteredSIds = newSelectedSIds.filter(sId => sId !== undefined) as SurrogateId[];
+            if (filteredSIds.length > 0) {
+                newParams.set('playerIds', filteredSIds.join(","));
+            } else {
+                newParams.delete('playerIds');
+            }
+            return newParams;
         });
     };
 
@@ -194,7 +206,20 @@ export const Head2HeadPage: FC = () => {
                             </Button>
                             <Button
                                 size={"icon"}
-                                onClick={() => setSelectedSIds(prev => prev.slice(0, prev.length - 1))}
+                                onClick={() => {
+                                    setSelectedSIds(prev => prev.slice(0, prev.length - 1));
+                                    setSearchParams(prev => {
+                                        const newParams = new URLSearchParams(prev);
+                                        const newSelectedSIds = selectedSIds.slice(0, selectedSIds.length - 1);
+                                        const filteredSIds = newSelectedSIds.filter(sId => sId !== undefined) as SurrogateId[];
+                                        if (filteredSIds.length > 0) {
+                                            newParams.set('playerIds', filteredSIds.join(","));
+                                        } else {
+                                            newParams.delete('playerIds');
+                                        }
+                                        return newParams;
+                                    });
+                                }}
                                 disabled={selectedSIds.length <= 2}
                             >
                                 <Minus className={"h-4 w-4"}></Minus>
