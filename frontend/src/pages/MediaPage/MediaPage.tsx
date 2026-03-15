@@ -18,7 +18,11 @@ type SocialsResponse = {
         title: string,
         thumbnail: string,
     }[],
-    playerYtChannels: PlayerYtChannel[]
+    playerYtChannels: PlayerYtChannel[],
+    recentVideos: {
+        id: string,
+        publishedAt: string
+    }[]
 }
 
 export const MediaPage = () => {
@@ -68,6 +72,33 @@ export const MediaPage = () => {
         <div
             className={"px-4 text-xxl overflow-y-auto flex flex-col items-center w-full mb-[142px] iphone-bottom-padding"}>
             <h1 className={"my-8"}>Media</h1>
+            <Card className={"mb-4 w-full"}>
+                <CardHeader>
+                    <CardTitle>Recent Videos</CardTitle>
+                </CardHeader>
+                <CardContent className={"flex flex-row flex-wrap"}>
+                    {
+                        socialsResponse.recentVideos
+                            .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+                            .map((video) => {
+                                let url = "https://www.youtube.com/embed/" + video.id;
+
+                                return (
+                                    <div key={video.id}>
+                                        <iframe width="420"
+                                                height="300"
+                                                src={url}
+                                                title="YouTube video player"
+                                                frameBorder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                referrerPolicy="strict-origin-when-cross-origin"
+                                                allowFullScreen></iframe>
+                                    </div>
+                                );
+                            })
+                    }
+                </CardContent>
+            </Card>
             <Card className={"mb-4 w-full"}>
                 <CardHeader>
                     <CardTitle>General</CardTitle>

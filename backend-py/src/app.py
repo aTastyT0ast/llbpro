@@ -3,11 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from mangum import Mangum
 from httpx import AsyncClient
+import asyncio
 import base64
+import xml.etree.ElementTree as ET
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 import os
 import json
+import traceback
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 from pydantic import BaseModel, Field
 
@@ -42,6 +46,22 @@ class PlayerSocialsResponse(BaseModel):
     )
 
 
+class RecentVideoResponse(BaseModel):
+    id: str = Field(description="YouTube video ID.")
+    publishedAt: datetime = Field(description="UTC datetime when the video was published.")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "id": "dQw4w9WgXcQ",
+                    "publishedAt": "2026-03-10T18:00:00+00:00",
+                }
+            ]
+        }
+    }
+
+
 class PlayerYtChannelResponse(YtChannelResponse):
     surrogateId: int = Field(
         description="Surrogate ID of the player linked to this YouTube channel."
@@ -54,6 +74,9 @@ class AllYtChannelsResponse(BaseModel):
     )
     playerYtChannels: list[PlayerYtChannelResponse] = Field(
         description="YouTube channels linked to at least one player."
+    )
+    recentVideos: list[RecentVideoResponse] = Field(
+        description="Recent videos published within the last week from any of the fetched channels, filtered by trigger words."
     )
 
     model_config = {
@@ -74,6 +97,10 @@ class AllYtChannelsResponse(BaseModel):
                             "thumbnail": "https://yt3.ggpht.com/ytc/example=s88-c-k-c0x00ffffff-no-rj",
                             "surrogateId": 42,
                         }
+                    ],
+                    "recentVideos": [
+                        {"id": "dQw4w9WgXcQ", "publishedAt": "2026-03-10T18:00:00+00:00"},
+                        {"id": "9bZkp7q19f0", "publishedAt": "2026-03-12T14:30:00+00:00"},
                     ],
                 }
             ]
@@ -313,8 +340,8 @@ async def get_players_by_query_params(
     response_model=PlayerSocialsResponse,
     summary="Get social media channels for a player",
     description=(
-        "Returns the YouTube channels linked to the player identified by `surrogate_id`. "
-        "Each entry contains the channel `id`, `title`, and the URL of the default thumbnail."
+            "Returns the YouTube channels linked to the player identified by `surrogate_id`. "
+            "Each entry contains the channel `id`, `title`, and the URL of the default thumbnail."
     ),
     responses={
         200: {
@@ -374,6 +401,43 @@ async def get_socials_for_player(
 
     return {"ytChannels": yt_channels}
 
+
+_YT_NS = "http://www.youtube.com/xml/schemas/2015"
+_ATOM_NS = "http://www.w3.org/2005/Atom"
+
+
+async def _fetch_rss_video_ids(
+        http_client: AsyncClient, channel_id: str, published_after: datetime,
+        semaphore: asyncio.Semaphore | None = None,
+) -> list[str]:
+    url = f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
+    try:
+        async with (semaphore if semaphore else asyncio.Semaphore(1)):
+            response = await http_client.get(url)
+        if response.status_code != 200:
+            print(f"_fetch_rss_video_ids – HTTP {response.status_code} for channel {channel_id}")
+            return []
+        root = ET.fromstring(response.text)
+        video_ids: list[str] = []
+        for entry in root.findall(f"{{{_ATOM_NS}}}entry"):
+            published_str = entry.findtext(f"{{{_ATOM_NS}}}published") or ""
+            if not published_str:
+                continue
+            published_at = datetime.fromisoformat(published_str)
+            if published_at < published_after:
+                break  # entries are newest-first; nothing older will match
+            video_id_el = entry.find(f"{{{_YT_NS}}}videoId")
+            if video_id_el is not None and video_id_el.text:
+                video_ids.append(video_id_el.text)
+        return video_ids
+    except Exception as exc:
+        print(
+            f"_fetch_rss_video_ids – {type(exc).__name__} for channel {channel_id}: {exc}\n"
+            + traceback.format_exc()
+        )
+        return []
+
+
 general_yt_channels = [
     "UC6oySkz4cxpVNph3OLgX9Ag",
     "UCEYtTbWx4KiSyeZS13TYaWw",
@@ -383,7 +447,15 @@ general_yt_channels = [
     "UC-YVP97T5FS0fm6Y9SWzNaw",
     "UCjiWcG09B22_O0-sAWHHIvg",
     "UCvAo6HMpHjW8rdceGNMbuFA",
-    "UC5Iy5AeizKhkKa6WoLAwWgA"
+    "UC5Iy5AeizKhkKa6WoLAwWgA",
+    "UCxbDs9QJAM1CmVEI8mrNhHw",
+    "UCAZ7Igee5kevvXLNkIhj4gA"
+]
+
+video_trigger_words = [
+    "blaze",
+    "lethal league",
+    "llb",
 ]
 
 # Simple in-memory cache – persists for the lifetime of the Lambda execution environment.
@@ -394,12 +466,6 @@ _all_yt_channels_cache: dict | None = None
     "/socials",
     response_model=AllYtChannelsResponse,
     summary="Get all known YouTube channels",
-    description=(
-        "Aggregates **every** YouTube channel that is either linked to a player in the player table "
-        "or listed as a general channel, returned as two separate lists. "
-        "The YouTube Data API is called in batches of up to 50 channel IDs per request. "
-        "Results are cached in-memory for the lifetime of the Lambda execution environment."
-    ),
     responses={
         200: {
             "description": "All known YouTube channels returned successfully.",
@@ -431,6 +497,7 @@ async def get_all_yt_channels():
     print(f"get_all_yt_channels – fetching {len(all_channel_ids)} channels in {len(batches)} batch(es)")
 
     fetched: dict[str, dict] = {}
+
     async with AsyncClient() as http_client:
         for batch in batches:
             params = {
@@ -444,8 +511,9 @@ async def get_all_yt_channels():
             if response.status_code != 200:
                 raise HTTPException(status_code=response.status_code, detail=response.text)
             for item in response.json().get("items", []):
+                channel_id = item.get("id")
                 channel = {
-                    "id": item.get("id"),
+                    "id": channel_id,
                     "title": item.get("snippet", {}).get("title"),
                     "thumbnail": (
                         item.get("snippet", {})
@@ -454,7 +522,54 @@ async def get_all_yt_channels():
                         .get("url")
                     ),
                 }
-                fetched[channel["id"]] = channel
+                fetched[channel_id] = channel
+
+        published_after = datetime.now(timezone.utc) - timedelta(weeks=2)
+
+        print(f"get_all_yt_channels – fetching RSS feeds for {len(fetched)} channel(s) in parallel")
+
+        rss_semaphore = asyncio.Semaphore(10)
+        rss_results = await asyncio.gather(*[
+            _fetch_rss_video_ids(http_client, ch_id, published_after, rss_semaphore)
+            for ch_id in fetched
+        ])
+        recent_video_ids: list[str] = [vid for sublist in rss_results for vid in sublist]
+
+        print(f"get_all_yt_channels – {len(recent_video_ids)} video(s) found in RSS feeds from the last week")
+
+        video_batches = [recent_video_ids[i:i + 50] for i in range(0, len(recent_video_ids), 50)]
+        print(
+            f"get_all_yt_channels – checking tags for {len(recent_video_ids)} recent video(s) in {len(video_batches)} batch(es)")
+
+        blaze_video_ids: list[dict] = []
+        for video_batch in video_batches:
+            v_params = {
+                "key": YOUTUBE_API_KEY,
+                "part": "snippet",
+                "id": ",".join(video_batch),
+            }
+            v_response = await http_client.get(
+                "https://www.googleapis.com/youtube/v3/videos", params=v_params
+            )
+            if v_response.status_code != 200:
+                print(f"get_all_yt_channels – failed to fetch video details: {v_response.status_code}")
+                continue
+            for item in v_response.json().get("items", []):
+                snippet = item.get("snippet", {})
+                title = snippet.get("title", "").lower()
+                description = snippet.get("description", "").lower()
+                tags: list[str] = [t.lower() for t in (snippet.get("tags") or [])]
+                words = [w.lower() for w in video_trigger_words]
+                if any(
+                        word in title or word in description or any(word in tag for tag in tags)
+                        for word in words
+                ):
+                    blaze_video_ids.append({
+                        "id": item["id"],
+                        "publishedAt": snippet.get("publishedAt"),
+                    })
+
+        print(f"get_all_yt_channels – {len(blaze_video_ids)} video(s) passed the trigger-word filter")
 
     result = {
         "generalYtChannels": [ch for ch_id, ch in fetched.items() if ch_id in general_ids],
@@ -463,6 +578,7 @@ async def get_all_yt_channels():
             for ch_id, ch in fetched.items()
             if ch_id in player_ids
         ],
+        "recentVideos": blaze_video_ids,
     }
     _all_yt_channels_cache = result
 
