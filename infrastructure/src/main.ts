@@ -20,6 +20,7 @@ export class LLBProStack extends Stack {
             CHALLONGE_USERNAME: process.env.CHALLONGE_USERNAME || "",
             CHALLONGE_API_KEY: process.env.CHALLONGE_API_KEY || "",
             GG_API_KEY: process.env.GG_API_KEY || "",
+            YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY || "",
             certificateArn: process.env.API_CERTIFICATE_ARN || "",
             domainName: domainName
         });

@@ -3,7 +3,7 @@ import './TourneyListPage.css';
 import {getDateStringFromDate} from "@/shared/date-utils.ts";
 import ggIcon from '../../assets/gg.svg';
 import challongeIcon from '../../assets/challonge.svg';
-import {Platform} from "@/domain/Player.ts";
+import {TourneyPlatform} from "@/domain/Player.ts";
 import {PrizePool, Tourney, TourneyType} from "../../state/GlobalStateProvider.tsx";
 import {SortOrder} from "@/shared/math-utils.ts";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table.tsx";
@@ -38,7 +38,7 @@ export const TourneyListPage: FC = () => {
     const [winnerFilter, setWinnerFilter] = useState<string>("");
     const [tourneyTypeFilter, setTourneyTypeFilter] = useState<TourneyType[]>([])
     const [tourneyStagesFilter, setTourneyStagesFilter] = useState<boolean | undefined>(undefined)
-    const [selectedPlatform, setSelectedPlatform] = useState<Platform | undefined>(undefined);
+    const [selectedPlatform, setSelectedPlatform] = useState<TourneyPlatform | undefined>(undefined);
     const onTourneyClick = useTourneyNavigation();
 
     useEffect(() => {
@@ -49,11 +49,11 @@ export const TourneyListPage: FC = () => {
         return <LoadingSpinner/>
     }
 
-    const getPlatformIcon = (platform: Platform) => {
+    const getPlatformIcon = (platform: TourneyPlatform) => {
         switch (platform) {
-            case Platform.Challonge:
+            case TourneyPlatform.Challonge:
                 return challongeIcon;
-            case Platform.GG:
+            case TourneyPlatform.GG:
                 return ggIcon;
         }
     }
@@ -147,17 +147,17 @@ export const TourneyListPage: FC = () => {
         <DropdownMenuLabel>Platform</DropdownMenuLabel>
         <DropdownMenuSeparator/>
         <ToggleGroup type={"single"} value={selectedPlatform}
-                     onValueChange={(platform: Platform) => setSelectedPlatform(platform || undefined)}>
-            <ToggleGroupItem value={Platform.Challonge}
+                     onValueChange={(platform: TourneyPlatform) => setSelectedPlatform(platform || undefined)}>
+            <ToggleGroupItem value={TourneyPlatform.Challonge}
                              className={"w-16 h-16 text-accent-foreground"}>
-                <img className={Platform.Challonge} src={getPlatformIcon(Platform.Challonge)}
-                     alt={Platform.Challonge}/>
+                <img className={TourneyPlatform.Challonge} src={getPlatformIcon(TourneyPlatform.Challonge)}
+                     alt={TourneyPlatform.Challonge}/>
             </ToggleGroupItem>
-            <ToggleGroupItem value={Platform.GG}
+            <ToggleGroupItem value={TourneyPlatform.GG}
                              className={"w-16 h-16 text-accent-foreground"}>
-                <img className={Platform.GG} src={getPlatformIcon(Platform.GG)} alt={Platform.GG}/>
+                <img className={TourneyPlatform.GG} src={getPlatformIcon(TourneyPlatform.GG)} alt={TourneyPlatform.GG}/>
             </ToggleGroupItem>
-            <ToggleGroupItem value={Platform.CUSTOM}
+            <ToggleGroupItem value={TourneyPlatform.CUSTOM}
                              className={"w-16 h-16 text-accent-foreground"}>
                 Custom
             </ToggleGroupItem>
@@ -224,7 +224,7 @@ export const TourneyListPage: FC = () => {
                             .sort(sortFunc)
                             .map(tourney => (
                                 <TableRow key={tourney.url}>
-                                    <TableCell>{tourney.platform !== Platform.CUSTOM &&
+                                    <TableCell>{tourney.platform !== TourneyPlatform.CUSTOM &&
                                         <img className={tourney.platform} src={getPlatformIcon(tourney.platform)}
                                              alt={tourney.platform}/>}</TableCell>
                                     <TableCell>{getDateStringFromDate(tourney.date)}</TableCell>

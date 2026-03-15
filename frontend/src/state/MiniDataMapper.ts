@@ -10,7 +10,7 @@ import {
     Tourney,
     TourneyId
 } from "./GlobalStateProvider.tsx";
-import {Platform} from "../domain/Player.ts";
+import {TourneyPlatform} from "../domain/Player.ts";
 import {Country} from "@/domain/Country.ts";
 import {Belt} from "@/domain/Belt.ts";
 
@@ -100,11 +100,11 @@ export const mapMiniPlayerData = (mini: MiniPlayerData): FullPlayerData => {
         },
         glickoHistory: history.map(([tourney, rating, deviation, volatility, rank]) => {
             const [tourneyId, platformId, date] = tourney;
-            let platform = Platform.CUSTOM;
+            let platform = TourneyPlatform.CUSTOM;
             if (platformId === 1) {
-                platform = Platform.Challonge;
+                platform = TourneyPlatform.Challonge;
             } else if (platformId === 0) {
-                platform = Platform.GG;
+                platform = TourneyPlatform.GG;
             }
 
             return {
@@ -149,11 +149,11 @@ export const mapMiniMatchData = (mini: MiniMatchData): FullMatchData => {
     const [tourney, matches] = mini;
     const [date, tourneyId, platformId] = tourney;
 
-    let platform = Platform.CUSTOM;
+    let platform = TourneyPlatform.CUSTOM;
     if (platformId === 1) {
-        platform = Platform.Challonge;
+        platform = TourneyPlatform.Challonge;
     } else if (platformId === 0) {
-        platform = Platform.GG;
+        platform = TourneyPlatform.GG;
     }
 
     const full = {
@@ -191,7 +191,7 @@ export type MiniTourney = [
     twitchVods: string[],
     prizepool: string
 ]
-export const mapMiniTourney = (platform: Platform) => (mini: MiniTourney): Tourney => {
+export const mapMiniTourney = (platform: TourneyPlatform) => (mini: MiniTourney): Tourney => {
     const [id, name, url, date, participants, tourneyType, hasGroups, ytVods, twitchVods, prizepool] = mini;
 
     const full: Tourney = {

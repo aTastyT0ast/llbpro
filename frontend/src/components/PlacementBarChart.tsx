@@ -8,7 +8,7 @@ import {Bar, BarChart, CartesianGrid, Cell, LabelList, YAxis} from "recharts";
 import {AxisDomain} from "recharts/types/util/types";
 import {FullPlayerData, Tourney, TourneyType} from "@/state/GlobalStateProvider.tsx";
 import {useCombiState} from "@/hooks/useCombiState.ts";
-import {Platform} from "@/domain/Player.ts";
+import {TourneyPlatform} from "@/domain/Player.ts";
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip.tsx";
 
 enum XDimension {
@@ -73,7 +73,7 @@ interface ChartData {
 
 interface PlacementBarChartProps {
     tourney: Tourney,
-    platform: Platform
+    platform: TourneyPlatform
 }
 
 export const PlacementBarChart: FC<PlacementBarChartProps> = (props) => {

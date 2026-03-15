@@ -2,7 +2,7 @@ import {FC, useEffect, useState} from "react";
 import {Link, useParams} from "react-router-dom";
 import {useCombiState} from "@/hooks/useCombiState.ts";
 import {LoadingSpinner} from "@/components/LoadingSpinner.tsx";
-import {Platform} from "@/domain/Player.ts";
+import {TourneyPlatform} from "@/domain/Player.ts";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table.tsx";
 import {FullPlayerData, Tourney, TourneyType} from "@/state/GlobalStateProvider.tsx";
@@ -25,13 +25,13 @@ export const TourneyPage: FC = () => {
     const tourneyId = Number(tourneyIdString);
     const [showAlias, setShowAlias] = useState<boolean>(false)
 
-    let platform = Platform.CUSTOM;
+    let platform = TourneyPlatform.CUSTOM;
     switch (platformString) {
         case "challonge":
-            platform = Platform.Challonge;
+            platform = TourneyPlatform.Challonge;
             break;
         case "gg":
-            platform = Platform.GG;
+            platform = TourneyPlatform.GG;
             break;
     }
     const {tourneys, correctMapping, rankedMatches} = useCombiState();
@@ -73,20 +73,20 @@ export const TourneyPage: FC = () => {
         .filter(p => p.name !== correctMapping.find(player => player.playerId === p.playerId)?.name)
         .length === 0;
 
-    const getPlatformIcon = (platform: Platform) => {
+    const getPlatformIcon = (platform: TourneyPlatform) => {
         switch (platform) {
-            case Platform.Challonge:
+            case TourneyPlatform.Challonge:
                 return challongeIcon;
-            case Platform.GG:
+            case TourneyPlatform.GG:
                 return ggIcon;
         }
     }
 
-    const getPlatformIconSize = (platform: Platform) => {
+    const getPlatformIconSize = (platform: TourneyPlatform) => {
         switch (platform) {
-            case Platform.Challonge:
+            case TourneyPlatform.Challonge:
                 return "w-20 h-20";
-            case Platform.GG:
+            case TourneyPlatform.GG:
                 return "w-10 h-10";
         }
     }
@@ -137,9 +137,9 @@ export const TourneyPage: FC = () => {
     return (
         <div
             className={"px-4 text-xxl overflow-y-auto flex flex-col items-center w-[100vw]  mb-[142px] iphone-bottom-padding"}>
-            <h1 className={"my-8"}>{tourney.platform !== Platform.CUSTOM && <img src={getPlatformIcon(tourney.platform)}
-                                                                                 className={"inline mr-4 " + getPlatformIconSize(tourney.platform)}
-                                                                                 alt={`[${tourney.platform}]`}/>}{tourney.name}</h1>
+            <h1 className={"my-8"}>{tourney.platform !== TourneyPlatform.CUSTOM && <img src={getPlatformIcon(tourney.platform)}
+                                                                                        className={"inline mr-4 " + getPlatformIconSize(tourney.platform)}
+                                                                                        alt={`[${tourney.platform}]`}/>}{tourney.name}</h1>
             <div className={"flex flex-col 2xl:flex-row gap-5 px-5"}>
                 <div className={"flex flex-col gap-5 w-[96vw] 2xl:w-[46vw]"}>
                     <Card>
@@ -176,7 +176,7 @@ export const TourneyPage: FC = () => {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Placement</TableHead>
-                                    {(tourney.tourneyType !== TourneyType.ROUND_ROBIN && platform !== Platform.CUSTOM)
+                                    {(tourney.tourneyType !== TourneyType.ROUND_ROBIN && platform !== TourneyPlatform.CUSTOM)
                                         && <TableHead>Seed</TableHead>}
                                     <TableHead>Standing</TableHead>
                                     <TableHead>Player</TableHead>
@@ -241,7 +241,7 @@ export const TourneyPage: FC = () => {
                                                     <TableCell
                                                         className={"flex border-0 items-center justify-center"}>{p.placement <= 3 ?
                                                         placementIcon : p.placement}</TableCell>
-                                                    {(tourney.tourneyType !== TourneyType.ROUND_ROBIN && platform !== Platform.CUSTOM) &&
+                                                    {(tourney.tourneyType !== TourneyType.ROUND_ROBIN && platform !== TourneyPlatform.CUSTOM) &&
                                                         <TableCell>{p.seed}</TableCell>}
                                                     <TableCell>{wins}-{losses}</TableCell>
                                                     <TableCell className={"hover-highlight cursor-pointer"}
@@ -385,7 +385,7 @@ export const TourneyPage: FC = () => {
                 </div>
             </div>
             {
-                tourney.platform === Platform.Challonge && <BracketPreview tourney={tourney}/>
+                tourney.platform === TourneyPlatform.Challonge && <BracketPreview tourney={tourney}/>
             }
         </div>
     )

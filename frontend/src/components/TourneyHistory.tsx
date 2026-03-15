@@ -1,5 +1,5 @@
 import {FC, useState} from "react";
-import {Platform} from "@/domain/Player.ts";
+import {TourneyPlatform} from "@/domain/Player.ts";
 import challongeIcon from "@/assets/challonge.svg";
 import ggIcon from "@/assets/gg.svg";
 import {getRatingDiff, getRatingDiffClassName} from "@/shared/stat-utils.ts";
@@ -16,11 +16,11 @@ export const TourneyHistory: FC<TourneyStatsProps> = ({tourneyHistory, player}) 
     const [showAlias, setShowAlias] = useState<boolean>(false)
     const onTourneyClick = useTourneyNavigation();
 
-    const getPlatformIcon = (platform: Platform) => {
+    const getPlatformIcon = (platform: TourneyPlatform) => {
         switch (platform) {
-            case Platform.Challonge:
+            case TourneyPlatform.Challonge:
                 return challongeIcon;
-            case Platform.GG:
+            case TourneyPlatform.GG:
                 return ggIcon;
         }
     }
@@ -71,7 +71,7 @@ export const TourneyHistory: FC<TourneyStatsProps> = ({tourneyHistory, player}) 
                             }
                             return (
                                 <TableRow key={index}>
-                                    <TableCell className={"w-[50px] p-0"}>{part.platform !== Platform.CUSTOM &&
+                                    <TableCell className={"w-[50px] p-0"}>{part.platform !== TourneyPlatform.CUSTOM &&
                                         <img className={"icon " + part.platform}
                                              src={getPlatformIcon(part.platform)}
                                              alt={part.platform}/>}</TableCell>

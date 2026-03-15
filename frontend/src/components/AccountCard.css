@@ -41,6 +41,12 @@
     margin-right: 8px;
 }
 
+.tag img.icon.YouTube {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+}
+
 .account-card {
     display: flex;
     gap: 8px;

@@ -1,13 +1,13 @@
-import {FC, useEffect} from "react";
-import {Platform, Player} from "../domain/Player.ts";
-import {AccountCard} from "./AccountCard.tsx";
+import {FC, useEffect, useState} from "react";
+import {Player} from "../domain/Player.ts";
+import {AccountCard, Platform} from "./AccountCard.tsx";
 import './PlayerProfile.css';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
 import {ScrollArea, ScrollBar} from "@/components/ui/scroll-area.tsx";
 import {getCharacterImage} from "@/shared/character-utils.ts";
 import {LoadingImage} from "@/components/LoadingImage.tsx";
 import {Country, getCountryFlag} from "@/domain/Country.ts";
-import {Rose, Tag} from "lucide-react";
+import {LoaderPinwheel, Rose, Tag} from "lucide-react";
 import {Belt, getBeltColor} from "@/domain/Belt.ts";
 import {BlazeButton} from "@/components/BlazeButton.tsx";
 import {useNavigate} from "react-router-dom";
@@ -18,14 +18,35 @@ interface PlayerProfileProps {
     currentRank: number
 }
 
+type SocialsResponse = {
+    ytChannels: {
+        id: string,
+        title: string,
+        thumbnail: string,
+    }[]
+}
+
 export const PlayerProfile: FC<PlayerProfileProps> = (props) => {
     const {player, currentRank} = props;
     const navigate = useNavigate();
     const game = useGameParams();
+    const [isLoading, setIsLoading] = useState(false);
+    const [socialsResponse, setSocialsResponse] = useState<SocialsResponse | undefined>(undefined)
 
     useEffect(() => {
+        let url = `${import.meta.env.VITE_API_BASE_URL}/players/${player.surrogateId}/socials`;
 
-    }, []);
+        setIsLoading(true);
+        setSocialsResponse(undefined);
+
+        fetch(url)
+            .then(async (response: Response) => {
+                if (response.ok) {
+                    setSocialsResponse(await response.json() as SocialsResponse)
+                }
+            })
+            .finally(() => setIsLoading(false));
+    }, [player]);
 
     const challongeAccountCards = player.challonge.accounts.map(account => {
         const link = "https://challonge.com/users/" + account.challongeUsername
@@ -65,6 +86,16 @@ export const PlayerProfile: FC<PlayerProfileProps> = (props) => {
                 platform={Platform.GG}
             />
         ));
+
+    const ytChannels = socialsResponse?.ytChannels?.map(channel => (
+        <AccountCard
+            key={channel.id}
+            avatarUrl={channel.thumbnail}
+            link={"https://www.youtube.com/channel/" + channel.id}
+            username={channel.title}
+            platform={Platform.YouTube}
+        />
+    )) || [];
 
     const isNorthAmerican = player.country === Country.NA;
     const countryFlag = player.country && !isNorthAmerican
@@ -123,6 +154,16 @@ export const PlayerProfile: FC<PlayerProfileProps> = (props) => {
                     </div>
                     <ScrollBar orientation="horizontal"/>
                 </ScrollArea>
+                {isLoading && <div className={"flex justify-center items-center mt-4"}>
+                    <LoaderPinwheel className={"spin h-10 w-10"}/>
+                </div>}
+                {ytChannels.length > 0 && <ScrollArea className="w-full">
+                    <div className={"accounts"}>
+                        {ytChannels}
+                    </div>
+                    <ScrollBar orientation="horizontal"/>
+                </ScrollArea>}
+
 
                 <BlazeButton label={"Show all matchups"} onClick={() => {
                     navigate(`/${game}/players/${player.surrogateId}/matchups`)

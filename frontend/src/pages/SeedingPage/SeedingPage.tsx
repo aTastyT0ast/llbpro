@@ -4,7 +4,7 @@ import './SeedingPage.css';
 import {BlazeButton} from "../../components/BlazeButton.tsx";
 import {FullPlayerData, SurrogateId} from "../../state/GlobalStateProvider.tsx";
 import {ChallongeCommunity, getSubDomain} from "@/domain/ChallongeCommunity.ts";
-import {Platform} from "@/domain/Player.ts";
+import {TourneyPlatform} from "@/domain/Player.ts";
 import challongeIcon from "../../assets/challonge.svg";
 import ggIcon from "../../assets/gg.svg";
 import {SortOrder} from "@/shared/math-utils.ts";
@@ -49,7 +49,7 @@ export const SeedingPage: FC = () => {
     const game = useGameParams();
     const [searchParams] = useSearchParams();
     const [tourneyId, setTourneyId] = useState<string>(searchParams.get("name") ?? "");
-    const [selectedPlatform, setSelectedPlatform] = useState<Platform>(Platform.Challonge);
+    const [selectedPlatform, setSelectedPlatform] = useState<TourneyPlatform>(TourneyPlatform.Challonge);
     const [challongeCommunity, setChallongeCommunity] = useState<ChallongeCommunity | undefined>();
     const [tourneySeeding, setTourneySeeding] = useState<TourneySeedingResponse | undefined>(undefined);
     const [currentSorter, setCurrentSorter] = useState<Sorter>(Sorter.RATING_LB_95);
@@ -130,7 +130,7 @@ export const SeedingPage: FC = () => {
         }
 
         let url = `${import.meta.env.VITE_API_BASE_URL}/challonge/tournaments/${prefixedTourneyId}/participants`;
-        if (selectedPlatform === Platform.GG) {
+        if (selectedPlatform === TourneyPlatform.GG) {
             url = `${import.meta.env.VITE_API_BASE_URL}/gg/${tourneyId.trim()}`;
         }
 
@@ -155,7 +155,7 @@ export const SeedingPage: FC = () => {
 
     const seededPlayers: FullPlayerData[] | undefined = tourneySeeding?.participants.map(participant => {
         const player = correctMapping.find(player => {
-                if (selectedPlatform === Platform.GG) {
+                if (selectedPlatform === TourneyPlatform.GG) {
                     return player.gg.accounts.some(acc =>
                         acc.userId === participant.userId
                     );
@@ -185,16 +185,16 @@ export const SeedingPage: FC = () => {
         return player;
     })
 
-    const getPlatformIcon = (platform: Platform) => {
+    const getPlatformIcon = (platform: TourneyPlatform) => {
         switch (platform) {
-            case Platform.Challonge:
+            case TourneyPlatform.Challonge:
                 return challongeIcon;
-            case Platform.GG:
+            case TourneyPlatform.GG:
                 return ggIcon;
         }
     }
 
-    const placeholder = selectedPlatform === Platform.Challonge ? "Enter tourney id" : "Enter event slug";
+    const placeholder = selectedPlatform === TourneyPlatform.Challonge ? "Enter tourney id" : "Enter event slug";
 
     return (
         <div className={"flex flex-col items-center overflow-y-auto  mb-[142px] w-full iphone-bottom-padding"}>
@@ -207,17 +207,17 @@ export const SeedingPage: FC = () => {
                     <CardContent>
                         <div className={"flex items-center gap-1 mb-4"}>
                             <ToggleGroup type={"single"} value={selectedPlatform}
-                                         onValueChange={(platform: Platform) => platform ? setSelectedPlatform(platform) : {}}>
-                                <ToggleGroupItem value={Platform.Challonge}
+                                         onValueChange={(platform: TourneyPlatform) => platform ? setSelectedPlatform(platform) : {}}>
+                                <ToggleGroupItem value={TourneyPlatform.Challonge}
                                                  className={"w-16 h-16 text-accent-foreground"}
-                                                 onClick={() => setSelectedPlatform(Platform.Challonge)}>
-                                    <img className={Platform.Challonge} src={getPlatformIcon(Platform.Challonge)}
-                                         alt={Platform.Challonge}/>
+                                                 onClick={() => setSelectedPlatform(TourneyPlatform.Challonge)}>
+                                    <img className={TourneyPlatform.Challonge} src={getPlatformIcon(TourneyPlatform.Challonge)}
+                                         alt={TourneyPlatform.Challonge}/>
                                 </ToggleGroupItem>
-                                <ToggleGroupItem value={Platform.GG}
+                                <ToggleGroupItem value={TourneyPlatform.GG}
                                                  className={"w-16 h-16 text-accent-foreground"}
-                                                 onClick={() => setSelectedPlatform(Platform.GG)}>
-                                    <img className={Platform.GG} src={getPlatformIcon(Platform.GG)} alt={Platform.GG}/>
+                                                 onClick={() => setSelectedPlatform(TourneyPlatform.GG)}>
+                                    <img className={TourneyPlatform.GG} src={getPlatformIcon(TourneyPlatform.GG)} alt={TourneyPlatform.GG}/>
                                 </ToggleGroupItem>
                             </ToggleGroup>
                             <Input placeholder={placeholder} value={tourneyId} onChange={onInputChange}
@@ -228,7 +228,7 @@ export const SeedingPage: FC = () => {
                                         <CircleHelp className={"size-8 text-accent-foreground ml-2"}/>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                        {selectedPlatform === Platform.Challonge ?
+                                        {selectedPlatform === TourneyPlatform.Challonge ?
                                             <p>Example: challonge.com/NPC30 -{">"} NPC30</p> :
                                             <p>Example: tournament/heat-wave-3/event/lethal-league-blaze-pc</p>
                                         }
@@ -237,7 +237,7 @@ export const SeedingPage: FC = () => {
                             </TooltipProvider>
                         </div>
                         {
-                            selectedPlatform === Platform.Challonge &&
+                            selectedPlatform === TourneyPlatform.Challonge &&
                             <Select onValueChange={(value) => {
                                 if (value === "none") {
                                     setChallongeCommunity(undefined);

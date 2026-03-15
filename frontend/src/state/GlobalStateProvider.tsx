@@ -1,5 +1,5 @@
 import {createContext, FC, ReactNode, useContext, useEffect, useState} from "react";
-import {GlickoStats, Platform} from "../domain/Player.ts";
+import {GlickoStats, TourneyPlatform} from "../domain/Player.ts";
 import {
     mapMiniMatchData,
     mapMiniPlayerData,
@@ -67,14 +67,14 @@ export const GlobalStateProvider: FC<OptionalChildren> = ({children}) => {
         fetch('/fflate_ch.json.gz')
             .then(response => response.json())
             .then((decompressedArray: MiniTourney[]) => {
-                const mappedArray: Tourney[] = decompressedArray.map(mapMiniTourney(Platform.Challonge))
+                const mappedArray: Tourney[] = decompressedArray.map(mapMiniTourney(TourneyPlatform.Challonge))
                 setChallongeTourneys(mappedArray)
             });
 
         fetch('/fflate_gg.json.gz')
             .then(response => response.json())
             .then((decompressedArray: MiniTourney[]) => {
-                const mappedArray: Tourney[] = decompressedArray.map(mapMiniTourney(Platform.GG))
+                const mappedArray: Tourney[] = decompressedArray.map(mapMiniTourney(TourneyPlatform.GG))
                 setGgTourneys(mappedArray)
             });
     }, []);
@@ -117,21 +117,21 @@ export const GlobalStateProviderL1: FC<OptionalChildren> = ({children}) => {
         fetch('/fflate_ch_l1.json.gz')
             .then(response => response.json())
             .then((decompressedArray: MiniTourney[]) => {
-                const mappedArray: Tourney[] = decompressedArray.map(mapMiniTourney(Platform.Challonge))
+                const mappedArray: Tourney[] = decompressedArray.map(mapMiniTourney(TourneyPlatform.Challonge))
                 setChallongeTourneys(mappedArray)
             });
 
         fetch('/fflate_gg_l1.json.gz')
             .then(response => response.json())
             .then((decompressedArray: MiniTourney[]) => {
-                const mappedArray: Tourney[] = decompressedArray.map(mapMiniTourney(Platform.GG))
+                const mappedArray: Tourney[] = decompressedArray.map(mapMiniTourney(TourneyPlatform.GG))
                 setGgTourneys(mappedArray)
             });
 
         fetch('/fflate_jbl16.json.gz')
             .then(response => response.json())
             .then((decompressedArray: MiniTourney[]) => {
-                const mappedArray: Tourney[] = decompressedArray.map(mapMiniTourney(Platform.CUSTOM))
+                const mappedArray: Tourney[] = decompressedArray.map(mapMiniTourney(TourneyPlatform.CUSTOM))
                 setCustomTourneys(mappedArray)
             });
     }, []);
@@ -193,7 +193,7 @@ export interface FullPlayerData {
 
 export interface GlickoHistoryEntry extends GlickoStats {
     tourney: {
-        platform: Platform,
+        platform: TourneyPlatform,
         id: TourneyId,
         date: Date,
     }
@@ -212,7 +212,7 @@ export interface FullMatchData {
     tourney: {
         date: Date,
         id: TourneyId,
-        platform: Platform
+        platform: TourneyPlatform
     }
     matches: Match[]
 }
@@ -228,7 +228,7 @@ export interface Tourney {
     id: TourneyId,
     name: string,
     url: string,
-    platform: Platform,
+    platform: TourneyPlatform,
     date: Date,
     participants: TourneyParticipant[],
     tourneyType: TourneyType,

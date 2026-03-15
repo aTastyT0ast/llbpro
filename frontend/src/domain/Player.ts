@@ -27,14 +27,14 @@ export interface GlickoStats {
     volatility: number,
 }
 
-export enum Platform {
+export enum TourneyPlatform {
     Challonge = "Challonge",
     GG = "GG",
     CUSTOM = "Custom"
 }
 
 export interface TourneyParticipation {
-    platform: Platform,
+    platform: TourneyPlatform,
     tourney: {
         id: TourneyId
         url: string,
@@ -52,7 +52,7 @@ export interface TourneyParticipation {
 
 export interface GlickoSnapshot extends GlickoStats {
     tourney: {
-        platform: Platform,
+        platform: TourneyPlatform,
         id: TourneyId,
         date: string
     }
@@ -64,7 +64,7 @@ export interface MatchHistoryEntry {
         url: string,
         date: string,
         id: TourneyId
-        platform: Platform
+        platform: TourneyPlatform
     },
     matches: Match[]
 }

@@ -14,7 +14,7 @@ import {usePlayerNavigation} from "@/hooks/usePlayerNavigation.ts";
 import {useGameParams} from "@/hooks/useGameParams.ts";
 import {useCrossPlayer} from "@/hooks/useCrossPlayer.ts";
 import {useTourneyNavigation} from "@/hooks/useTourneyNavigation.ts";
-import {Platform} from "@/domain/Player.ts";
+import {TourneyPlatform} from "@/domain/Player.ts";
 import {getDateString} from "@/shared/date-utils.ts";
 import {useSearchParams} from "react-router-dom";
 import {SITE_TITLE} from "@/shared/constants.ts";
@@ -31,7 +31,7 @@ interface Head2HeadStats {
     comparisons: Comparison[],
     matchHistory: {
         tourney: {
-            platform: Platform,
+            platform: TourneyPlatform,
             id: TourneyId,
             name: string,
             date: Date

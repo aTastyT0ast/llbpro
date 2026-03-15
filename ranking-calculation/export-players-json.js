@@ -19,6 +19,14 @@ const playersWithSteam = String(fs.readFileSync('../analysis/steam/steam_ids.csv
     })
     .filter(({steamIds}) => steamIds.length > 0);
 
+const playersWithSocials = String(fs.readFileSync('assets/socials.csv')).split("\r\n").slice(1)
+    .map(line => {
+        const [name, challongeId, yt_channel_ids] = line.split(",");
+        const ytChannelIds = yt_channel_ids.split(";").map(steamId => steamId.trim()).filter(steamId => steamId);
+        return {name, challongeId: parseInt(challongeId), ytChannelIds};
+    })
+    .filter(({ytChannelIds}) => ytChannelIds.length > 0);
+
 const getPlayerDataDTO = (player) => {
     return {
         surrogateId: player.surrogateId,
@@ -29,6 +37,7 @@ const getPlayerDataDTO = (player) => {
         ggAccounts: player.gg.accounts,
         steamIds: player.steamIds,
         discordIds: player.discordIds,
+        ytChannelIds: player.ytChannelIds,
     };
 };
 
@@ -43,6 +52,7 @@ const players = correctMappingBlaze.map(blazePlayer => {
 
     const steamPlayer = playersWithSteam.find(p => blazePlayer.challonge.accounts.some(acc => acc.challongeId === p.challongeId));
     const discordPlayer = playersWithDiscord.find(p => blazePlayer.challonge.accounts.some(acc => acc.challongeId === p.challongeId));
+    const playerWithSocials = playersWithSocials.find(p => blazePlayer.challonge.accounts.some(acc => acc.challongeId === p.challongeId));
     const l1Player = correctMappingL1.find(l1Player => l1Player.surrogateId === blazePlayer.surrogateId);
     const l1PlayerId = l1Player ? l1Player.id : null;
 
@@ -52,6 +62,7 @@ const players = correctMappingBlaze.map(blazePlayer => {
         l1PlayerId: l1PlayerId,
         steamIds: steamPlayer ? steamPlayer.steamIds : [],
         discordIds: discordPlayer ? discordPlayer.discordIds : [],
+        ytChannelIds: playerWithSocials ? playerWithSocials.ytChannelIds : [],
     };
 });
 
@@ -68,6 +79,7 @@ const remainingPlayers = correctMappingL1
 
         const steamPlayer = playersWithSteam.find(p => l1Player.challonge.accounts.some(acc => acc.challongeId === p.challongeId));
         const discordPlayer = playersWithDiscord.find(p => l1Player.challonge.accounts.some(acc => acc.challongeId === p.challongeId));
+        const playerWithSocials = playersWithSocials.find(p => l1Player.challonge.accounts.some(acc => acc.challongeId === p.challongeId));
 
         return {
             ...l1Player,
@@ -75,6 +87,7 @@ const remainingPlayers = correctMappingL1
             l1PlayerId: l1Player.id,
             steamIds: steamPlayer ? steamPlayer.steamIds : [],
             discordIds: discordPlayer ? discordPlayer.discordIds : [],
+            ytChannelIds: playerWithSocials ? playerWithSocials.ytChannelIds : [],
         };
     });
 

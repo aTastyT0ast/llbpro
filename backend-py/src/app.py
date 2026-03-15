@@ -18,10 +18,53 @@ app = FastAPI(
 )
 
 
+class YtChannelResponse(BaseModel):
+    id: str = Field(description="YouTube channel ID.")
+    title: str = Field(description="Display name of the YouTube channel.")
+    thumbnail: Optional[str] = Field(default=None, description="URL of the channel's default thumbnail (88×88 px).")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "id": "UCvE8Mza7uRuiYlwiSDyJi9A",
+                    "title": "Good Morning Magic",
+                    "thumbnail": "https://yt3.ggpht.com/ytc/example=s88-c-k-c0x00ffffff-no-rj",
+                }
+            ]
+        }
+    }
+
+
+class PlayerSocialsResponse(BaseModel):
+    ytChannels: list[YtChannelResponse] = Field(
+        description="List of YouTube channels linked to this player."
+    )
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "ytChannels": [
+                        {
+                            "id": "UCvE8Mza7uRuiYlwiSDyJi9A",
+                            "title": "Good Morning Magic",
+                            "thumbnail": "https://yt3.ggpht.com/ytc/example=s88-c-k-c0x00ffffff-no-rj",
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+
+
 class PlayerResponse(BaseModel):
-    surrogateId: int = Field(description="Player Id that is used in the path of the LLBlaze.Pro player profile URL. e.g. https://llblaze.pro/llb/players/{surrogateId})")
-    blazePlayerId: Optional[int] = Field(default=None, description="Internal id of the player in Glicko2 rating system for Blaze.")
-    l1PlayerId: Optional[int] = Field(default=None, description="Internal id of the player in Glicko2 rating system for LL.")
+    surrogateId: int = Field(
+        description="Player Id that is used in the path of the LLBlaze.Pro player profile URL. e.g. https://llblaze.pro/llb/players/{surrogateId})")
+    blazePlayerId: Optional[int] = Field(default=None,
+                                         description="Internal id of the player in Glicko2 rating system for Blaze.")
+    l1PlayerId: Optional[int] = Field(default=None,
+                                      description="Internal id of the player in Glicko2 rating system for LL.")
 
     model_config = {
         "json_schema_extra": {
@@ -41,6 +84,7 @@ async def not_found_handler(request: Request, exc: HTTPException):
     print(f"Route not found: {request.method} {request.url.path}")
     return JSONResponse(status_code=404, content={"detail": "Not Found"})
 
+
 origins = [
     "http://127.0.0.1:5173",
     "http://localhost:5173",
@@ -58,6 +102,7 @@ app.add_middleware(
 CHALLONGE_API_KEY = os.environ['CHALLONGE_API_KEY']
 CHALLONGE_USERNAME = os.environ['CHALLONGE_USERNAME']
 GG_API_KEY = os.environ['GG_API_KEY']
+YOUTUBE_API_KEY = os.environ['YOUTUBE_API_KEY']
 
 _players_path = os.path.join(os.path.dirname(__file__), "players.json")
 with open(_players_path, "r", encoding="utf-8") as _f:
@@ -65,6 +110,7 @@ with open(_players_path, "r", encoding="utf-8") as _f:
 
 players_table: dict = {}
 for _p in _players_list:
+    players_table[f"SURROGATEID#{_p['surrogateId']}"] = _p
     for _steam_id in _p.get("steamIds", []):
         players_table[f"STEAMID#{_steam_id}"] = _p
     for _discord_id in _p.get("discordIds", []):
@@ -111,6 +157,7 @@ transport = AIOHTTPTransport(url="https://api.start.gg/gql/alpha", headers={
     "Authorization": f"Bearer {GG_API_KEY}"
 })
 client = Client(transport=transport)
+
 
 @app.get("/gg/tournament/{tourney_name}/event/{event_name}")
 async def get_gg_entrants(tourney_name: str, event_name: str):
@@ -163,7 +210,8 @@ query getEventId($slug: String) {
 
     participants = [
         {
-            "userId": entrant['participants'][0]['player']['user']['id'] if entrant['participants'][0]['player']['user'] else None,
+            "userId": entrant['participants'][0]['player']['user']['id'] if entrant['participants'][0]['player'][
+                'user'] else None,
             "name": entrant['participants'][0]['player']['gamerTag'],
             "displayName": entrant['name'],
         }
@@ -181,9 +229,9 @@ query getEventId($slug: String) {
     response_model=PlayerResponse,
     summary="Look up a player by Steam or Discord ID",
     description=(
-        "Returns the internal player IDs associated with the given Steam or Discord ID. "
-        "Either `steam_id` or `discord_id` must be provided."
-        "`steam_id` has a higher precedence if both are provided. "
+            "Returns the internal player IDs associated with the given Steam or Discord ID. "
+            "Either `steam_id` or `discord_id` must be provided."
+            "`steam_id` has a higher precedence if both are provided. "
     ),
     responses={
         200: {
@@ -205,16 +253,16 @@ query getEventId($slug: String) {
     tags=["Players"],
 )
 async def get_players_by_query_params(
-    steam_id: Optional[str] = Query(
-        default=None,
-        description="64 bit Steam ID",
-        examples=["76561197972495328"],
-    ),
-    discord_id: Optional[str] = Query(
-        default=None,
-        description="Discord User ID",
-        examples=["123456789012345678"],
-    ),
+        steam_id: Optional[str] = Query(
+            default=None,
+            description="64 bit Steam ID",
+            examples=["76561197972495328"],
+        ),
+        discord_id: Optional[str] = Query(
+            default=None,
+            description="Discord User ID",
+            examples=["123456789012345678"],
+        ),
 ):
     if not steam_id and not discord_id:
         raise HTTPException(status_code=400, detail="Missing steam_id or discord_id query parameter")
@@ -237,8 +285,73 @@ async def get_players_by_query_params(
     }
 
 
+@app.get(
+    "/players/{surrogate_id}/socials",
+    response_model=PlayerSocialsResponse,
+    summary="Get social media channels for a player",
+    description=(
+        "Returns the YouTube channels linked to the player identified by `surrogate_id`. "
+        "Each entry contains the channel `id`, `title`, and the URL of the default thumbnail."
+    ),
+    responses={
+        200: {
+            "description": "YouTube channels found – returns id, title and default thumbnail for each channel.",
+            "model": PlayerSocialsResponse,
+        },
+        204: {
+            "description": "No player found for the given `surrogate_id`, or the player has no linked channels.",
+        },
+    },
+    tags=["Socials"],
+)
+async def get_socials(
+        surrogate_id: str
+):
+    if not surrogate_id:
+        raise HTTPException(status_code=400, detail="Missing surrogate_id path parameter")
+
+    player = players_table.get(f"SURROGATEID#{surrogate_id}")
+    if not player:
+        return Response(status_code=204)
+
+    print("loading ytChannels for ", player.get("displayName"))
+
+    yt_channel_ids = player.get("ytChannelIds", [])
+    if not yt_channel_ids:
+        return {"ytChannels": []}
+
+    channel_ids = ",".join(yt_channel_ids)
+    url = "https://www.googleapis.com/youtube/v3/channels"
+    params = {
+        "key": YOUTUBE_API_KEY,
+        "part": "snippet",
+        "id": channel_ids,
+    }
+
+    async with AsyncClient() as http_client:
+        response = await http_client.get(url, params=params)
+
+    if response.status_code != 200:
+        raise HTTPException(status_code=response.status_code, detail=response.text)
+
+    data = response.json()
+    yt_channels = [
+        {
+            "title": item.get("snippet", {}).get("title"),
+            "id": item.get("id"),
+            "thumbnail": item.get("snippet", {}).get("thumbnails", {}).get("default", {}).get("url"),
+        }
+        for item in data.get("items", [])
+    ]
+
+    return {
+        "ytChannels": yt_channels,
+    }
+
+
 handler = Mangum(app, lifespan="off")
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
