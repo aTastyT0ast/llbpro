@@ -41,17 +41,40 @@ class PlayerSocialsResponse(BaseModel):
         description="List of YouTube channels linked to this player."
     )
 
+
+class PlayerYtChannelResponse(YtChannelResponse):
+    surrogateId: int = Field(
+        description="Surrogate ID of the player linked to this YouTube channel."
+    )
+
+
+class AllYtChannelsResponse(BaseModel):
+    generalYtChannels: list[YtChannelResponse] = Field(
+        description="General YouTube channels not tied to a specific player."
+    )
+    playerYtChannels: list[PlayerYtChannelResponse] = Field(
+        description="YouTube channels linked to at least one player."
+    )
+
     model_config = {
         "json_schema_extra": {
             "examples": [
                 {
-                    "ytChannels": [
+                    "generalYtChannels": [
+                        {
+                            "id": "UC6oySkz4cxpVNph3OLgX9Ag",
+                            "title": "LLB Stadium",
+                            "thumbnail": "https://yt3.ggpht.com/ytc/example=s88-c-k-c0x00ffffff-no-rj",
+                        }
+                    ],
+                    "playerYtChannels": [
                         {
                             "id": "UCvE8Mza7uRuiYlwiSDyJi9A",
                             "title": "Good Morning Magic",
                             "thumbnail": "https://yt3.ggpht.com/ytc/example=s88-c-k-c0x00ffffff-no-rj",
+                            "surrogateId": 42,
                         }
-                    ]
+                    ],
                 }
             ]
         }
@@ -304,7 +327,7 @@ async def get_players_by_query_params(
     },
     tags=["Socials"],
 )
-async def get_socials(
+async def get_socials_for_player(
         surrogate_id: str
 ):
     if not surrogate_id:
@@ -316,16 +339,22 @@ async def get_socials(
 
     print("loading ytChannels for ", player.get("displayName"))
 
-    yt_channel_ids = player.get("ytChannelIds", [])
+    yt_channel_ids: list[str] = player.get("ytChannelIds", [])
     if not yt_channel_ids:
         return {"ytChannels": []}
 
-    channel_ids = ",".join(yt_channel_ids)
+    if _all_yt_channels_cache is not None:
+        print(f"get_socials_for_player – serving from cache for {player.get('displayName')}")
+        id_set = set(yt_channel_ids)
+        all_cached = _all_yt_channels_cache["generalYtChannels"] + _all_yt_channels_cache["playerYtChannels"]
+        return {"ytChannels": [ch for ch in all_cached if ch["id"] in id_set]}
+
+    print(f"get_socials_for_player – cache cold, fetching from YT for {player.get('displayName')}")
     url = "https://www.googleapis.com/youtube/v3/channels"
     params = {
         "key": YOUTUBE_API_KEY,
         "part": "snippet",
-        "id": channel_ids,
+        "id": ",".join(yt_channel_ids),
     }
 
     async with AsyncClient() as http_client:
@@ -334,19 +363,110 @@ async def get_socials(
     if response.status_code != 200:
         raise HTTPException(status_code=response.status_code, detail=response.text)
 
-    data = response.json()
     yt_channels = [
         {
             "title": item.get("snippet", {}).get("title"),
             "id": item.get("id"),
             "thumbnail": item.get("snippet", {}).get("thumbnails", {}).get("default", {}).get("url"),
         }
-        for item in data.get("items", [])
+        for item in response.json().get("items", [])
     ]
 
-    return {
-        "ytChannels": yt_channels,
+    return {"ytChannels": yt_channels}
+
+general_yt_channels = [
+    "UC6oySkz4cxpVNph3OLgX9Ag",
+    "UCEYtTbWx4KiSyeZS13TYaWw",
+    "UCojNcqcwhdiflMJ8jYqMEEw",
+    "UCYE9T-qVjJ8s40Xqhn7xocw",
+    "UCqylEnGThtOdl6_bNZviW8w",
+    "UC-YVP97T5FS0fm6Y9SWzNaw",
+    "UCjiWcG09B22_O0-sAWHHIvg",
+    "UCvAo6HMpHjW8rdceGNMbuFA",
+    "UC5Iy5AeizKhkKa6WoLAwWgA"
+]
+
+# Simple in-memory cache – persists for the lifetime of the Lambda execution environment.
+_all_yt_channels_cache: dict | None = None
+
+
+@app.get(
+    "/socials",
+    response_model=AllYtChannelsResponse,
+    summary="Get all known YouTube channels",
+    description=(
+        "Aggregates **every** YouTube channel that is either linked to a player in the player table "
+        "or listed as a general channel, returned as two separate lists. "
+        "The YouTube Data API is called in batches of up to 50 channel IDs per request. "
+        "Results are cached in-memory for the lifetime of the Lambda execution environment."
+    ),
+    responses={
+        200: {
+            "description": "All known YouTube channels returned successfully.",
+            "model": AllYtChannelsResponse,
+        },
+    },
+    tags=["Socials"],
+)
+async def get_all_yt_channels():
+    global _all_yt_channels_cache
+
+    print("get_all_yt_channels called")
+
+    if _all_yt_channels_cache is not None:
+        print("get_all_yt_channels – returning cached result")
+        return _all_yt_channels_cache
+
+    general_ids: set[str] = set(general_yt_channels)
+    player_ids: set[str] = set()
+    channel_to_surrogate_id: dict[str, int] = {}
+    for player in _players_list:
+        for channel_id in player.get("ytChannelIds", []):
+            player_ids.add(channel_id)
+            channel_to_surrogate_id[channel_id] = player["surrogateId"]
+
+    all_channel_ids = list(general_ids | player_ids)
+    batches = [all_channel_ids[i:i + 50] for i in range(0, len(all_channel_ids), 50)]
+
+    print(f"get_all_yt_channels – fetching {len(all_channel_ids)} channels in {len(batches)} batch(es)")
+
+    fetched: dict[str, dict] = {}
+    async with AsyncClient() as http_client:
+        for batch in batches:
+            params = {
+                "key": YOUTUBE_API_KEY,
+                "part": "snippet",
+                "id": ",".join(batch),
+            }
+            response = await http_client.get(
+                "https://www.googleapis.com/youtube/v3/channels", params=params
+            )
+            if response.status_code != 200:
+                raise HTTPException(status_code=response.status_code, detail=response.text)
+            for item in response.json().get("items", []):
+                channel = {
+                    "id": item.get("id"),
+                    "title": item.get("snippet", {}).get("title"),
+                    "thumbnail": (
+                        item.get("snippet", {})
+                        .get("thumbnails", {})
+                        .get("default", {})
+                        .get("url")
+                    ),
+                }
+                fetched[channel["id"]] = channel
+
+    result = {
+        "generalYtChannels": [ch for ch_id, ch in fetched.items() if ch_id in general_ids],
+        "playerYtChannels": [
+            {**ch, "surrogateId": channel_to_surrogate_id[ch_id]}
+            for ch_id, ch in fetched.items()
+            if ch_id in player_ids
+        ],
     }
+    _all_yt_channels_cache = result
+
+    return result
 
 
 handler = Mangum(app, lifespan="off")

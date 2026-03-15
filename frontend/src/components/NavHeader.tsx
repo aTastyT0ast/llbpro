@@ -43,7 +43,9 @@ export const NavHeader: FC = () => {
         navigate(newPath);
     }
 
-    const noGame = window.location.pathname === "/faq" || window.location.pathname === "/imprint";
+    const noGame = window.location.pathname === "/faq"
+        || window.location.pathname === "/media"
+        || window.location.pathname === "/imprint";
 
     return (
         <header>
@@ -64,6 +66,9 @@ export const NavHeader: FC = () => {
                     <BlazeButton label={"Head2Head"}
                                  onClick={() => navigate(`/${currentGame}/head2head`)}
                                  secondaryNavigation={`/${currentGame}/head2head`}/>
+                    <BlazeButton label={"Media"}
+                                 onClick={() => navigate("/media")}
+                                 secondaryNavigation={"/media"}/>
                     <BlazeButton label={"Seeding Helper"}
                                  onClick={() => navigate(`/${currentGame}/seeding`)}
                                  secondaryNavigation={`/${currentGame}/seeding`}/>

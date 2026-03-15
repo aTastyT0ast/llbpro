@@ -18,7 +18,7 @@ interface PlayerProfileProps {
     currentRank: number
 }
 
-type SocialsResponse = {
+type PlayerSocialsResponse = {
     ytChannels: {
         id: string,
         title: string,
@@ -31,7 +31,7 @@ export const PlayerProfile: FC<PlayerProfileProps> = (props) => {
     const navigate = useNavigate();
     const game = useGameParams();
     const [isLoading, setIsLoading] = useState(false);
-    const [socialsResponse, setSocialsResponse] = useState<SocialsResponse | undefined>(undefined)
+    const [socialsResponse, setSocialsResponse] = useState<PlayerSocialsResponse | undefined>(undefined)
 
     useEffect(() => {
         let url = `${import.meta.env.VITE_API_BASE_URL}/players/${player.surrogateId}/socials`;
@@ -42,7 +42,7 @@ export const PlayerProfile: FC<PlayerProfileProps> = (props) => {
         fetch(url)
             .then(async (response: Response) => {
                 if (response.ok) {
-                    setSocialsResponse(await response.json() as SocialsResponse)
+                    setSocialsResponse(await response.json() as PlayerSocialsResponse)
                 }
             })
             .finally(() => setIsLoading(false));
