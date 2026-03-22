@@ -39,16 +39,18 @@ export const MediaPage = () => {
     useEffect(() => {
         document.title = `Media - ${SITE_TITLE}`;
 
+        const abortController = new AbortController();
+
         let url = `${import.meta.env.VITE_API_BASE_URL}/socials`;
-
         setSocialsResponse(undefined);
-
-        fetch(url)
+        fetch(url, {signal: abortController.signal})
             .then(async (response: Response) => {
-                if (response.ok) {
+                if (response.ok && !abortController.signal.aborted) {
                     setSocialsResponse(await response.json() as SocialsResponse)
                 }
             });
+
+        return () => abortController.abort();
     }, []);
 
     if (!socialsResponse || !stateBlaze.correctMapping || !stateL1.correctMapping) {

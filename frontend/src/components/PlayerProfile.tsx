@@ -44,13 +44,17 @@ export const PlayerProfile: FC<PlayerProfileProps> = (props) => {
         setIsLoading(true);
         setSocialsResponse(undefined);
 
-        fetch(url)
+        const abortController = new AbortController();
+
+        fetch(url, {signal: abortController.signal})
             .then(async (response: Response) => {
-                if (response.ok) {
+                if (response.ok && !abortController.signal.aborted) {
                     setSocialsResponse(await response.json() as PlayerSocialsResponse)
                 }
             })
             .finally(() => setIsLoading(false));
+
+        return () => abortController.abort();
     }, [player]);
 
     const challongeAccountCards = player.challonge.accounts.map(account => {
