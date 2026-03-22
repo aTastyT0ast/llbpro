@@ -13,6 +13,8 @@ export interface ApiProps {
     CHALLONGE_API_KEY: string;
     GG_API_KEY: string;
     YOUTUBE_API_KEY: string;
+    TWITCH_CLIENT_ID: string;
+    TWITCH_CLIENT_SECRET: string;
     certificateArn: string;
     domainName: string;
 }
@@ -48,6 +50,8 @@ export class LLBProApi extends Construct {
                 CHALLONGE_API_KEY: props.CHALLONGE_API_KEY || "",
                 GG_API_KEY: props.GG_API_KEY || "",
                 YOUTUBE_API_KEY: props.YOUTUBE_API_KEY || "",
+                TWITCH_CLIENT_ID: props.TWITCH_CLIENT_ID || "",
+                TWITCH_CLIENT_SECRET: props.TWITCH_CLIENT_SECRET || "",
             }
         });
 

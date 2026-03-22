@@ -44,6 +44,10 @@ class PlayerSocialsResponse(BaseModel):
     ytChannels: list[YtChannelResponse] = Field(
         description="List of YouTube channels linked to this player."
     )
+    twitchChannels: list["TwitchChannelResponse"] = Field(
+        default=[],
+        description="List of Twitch channels linked to this player.",
+    )
 
 
 class RecentVideoResponse(BaseModel):
@@ -68,6 +72,34 @@ class PlayerYtChannelResponse(YtChannelResponse):
     )
 
 
+class TwitchChannelResponse(BaseModel):
+    id: str = Field(description="Twitch user/channel ID.")
+    title: str = Field(description="Display name of the Twitch channel (display_name from Helix API).")
+    thumbnail: Optional[str] = Field(default=None, description="URL of the channel's profile image (profile_image_url from Helix API).")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "id": "425929462",
+                    "title": "LLBStadium",
+                    "thumbnail": "https://static-cdn.jtvnw.net/jtv_user_pictures/example-profile_image-70x70.png",
+                }
+            ]
+        }
+    }
+
+
+class PlayerTwitchChannelResponse(TwitchChannelResponse):
+    surrogateId: int = Field(
+        description="Surrogate ID of the player linked to this Twitch channel."
+    )
+
+
+# Forward reference in PlayerSocialsResponse resolved now that TwitchChannelResponse is defined.
+PlayerSocialsResponse.model_rebuild()
+
+
 class AllYtChannelsResponse(BaseModel):
     generalYtChannels: list[YtChannelResponse] = Field(
         description="General YouTube channels not tied to a specific player."
@@ -77,6 +109,12 @@ class AllYtChannelsResponse(BaseModel):
     )
     recentVideos: list[RecentVideoResponse] = Field(
         description="Recent videos published within the last week from any of the fetched channels, filtered by trigger words."
+    )
+    generalTwitchChannels: list[TwitchChannelResponse] = Field(
+        description="General Twitch channels not tied to a specific player."
+    )
+    playerTwitchChannels: list[PlayerTwitchChannelResponse] = Field(
+        description="Twitch channels linked to at least one player."
     )
 
     model_config = {
@@ -101,6 +139,21 @@ class AllYtChannelsResponse(BaseModel):
                     "recentVideos": [
                         {"id": "dQw4w9WgXcQ", "publishedAt": "2026-03-10T18:00:00+00:00"},
                         {"id": "9bZkp7q19f0", "publishedAt": "2026-03-12T14:30:00+00:00"},
+                    ],
+                    "generalTwitchChannels": [
+                        {
+                            "id": "425929462",
+                            "title": "LLBStadium",
+                            "thumbnail": "https://static-cdn.jtvnw.net/jtv_user_pictures/example-profile_image-70x70.png",
+                        }
+                    ],
+                    "playerTwitchChannels": [
+                        {
+                            "id": "680366678",
+                            "title": "SomePlayer",
+                            "thumbnail": "https://static-cdn.jtvnw.net/jtv_user_pictures/example2-profile_image-70x70.png",
+                            "surrogateId": 42,
+                        }
                     ],
                 }
             ]
@@ -153,6 +206,8 @@ CHALLONGE_API_KEY = os.environ['CHALLONGE_API_KEY']
 CHALLONGE_USERNAME = os.environ['CHALLONGE_USERNAME']
 GG_API_KEY = os.environ['GG_API_KEY']
 YOUTUBE_API_KEY = os.environ['YOUTUBE_API_KEY']
+TWITCH_CLIENT_ID = os.environ['TWITCH_CLIENT_ID']
+TWITCH_CLIENT_SECRET = os.environ['TWITCH_CLIENT_SECRET']
 
 _players_path = os.path.join(os.path.dirname(__file__), "players.json")
 with open(_players_path, "r", encoding="utf-8") as _f:
@@ -367,39 +422,48 @@ async def get_socials_for_player(
     print("loading ytChannels for ", player.get("displayName"))
 
     yt_channel_ids: list[str] = player.get("ytChannelIds", [])
-    if not yt_channel_ids:
-        return {"ytChannels": []}
+    ttv_channel_ids: list[str] = player.get("twitchChannelIds", [])
+
+    if not yt_channel_ids and not ttv_channel_ids:
+        return {"ytChannels": [], "twitchChannels": []}
 
     if _all_yt_channels_cache is not None:
         print(f"get_socials_for_player – serving from cache for {player.get('displayName')}")
-        id_set = set(yt_channel_ids)
-        all_cached = _all_yt_channels_cache["generalYtChannels"] + _all_yt_channels_cache["playerYtChannels"]
-        return {"ytChannels": [ch for ch in all_cached if ch["id"] in id_set]}
+        yt_id_set = set(yt_channel_ids)
+        ttv_id_set = set(ttv_channel_ids)
+        all_cached_yt = _all_yt_channels_cache["generalYtChannels"] + _all_yt_channels_cache["playerYtChannels"]
+        all_cached_ttv = _all_yt_channels_cache["generalTwitchChannels"] + _all_yt_channels_cache["playerTwitchChannels"]
+        return {
+            "ytChannels": [ch for ch in all_cached_yt if ch["id"] in yt_id_set],
+            "twitchChannels": [ch for ch in all_cached_ttv if ch["id"] in ttv_id_set],
+        }
 
-    print(f"get_socials_for_player – cache cold, fetching from YT for {player.get('displayName')}")
-    url = "https://www.googleapis.com/youtube/v3/channels"
-    params = {
-        "key": YOUTUBE_API_KEY,
-        "part": "snippet",
-        "id": ",".join(yt_channel_ids),
-    }
+    print(f"get_socials_for_player – cache cold, fetching from APIs for {player.get('displayName')}")
 
     async with AsyncClient() as http_client:
-        response = await http_client.get(url, params=params)
+        yt_channels: list[dict] = []
+        if yt_channel_ids:
+            url = "https://www.googleapis.com/youtube/v3/channels"
+            params = {
+                "key": YOUTUBE_API_KEY,
+                "part": "snippet",
+                "id": ",".join(yt_channel_ids),
+            }
+            response = await http_client.get(url, params=params)
+            if response.status_code != 200:
+                raise HTTPException(status_code=response.status_code, detail=response.text)
+            yt_channels = [
+                {
+                    "title": item.get("snippet", {}).get("title"),
+                    "id": item.get("id"),
+                    "thumbnail": item.get("snippet", {}).get("thumbnails", {}).get("default", {}).get("url"),
+                }
+                for item in response.json().get("items", [])
+            ]
 
-    if response.status_code != 200:
-        raise HTTPException(status_code=response.status_code, detail=response.text)
+        ttv_channels = await _fetch_twitch_users(http_client, ttv_channel_ids)
 
-    yt_channels = [
-        {
-            "title": item.get("snippet", {}).get("title"),
-            "id": item.get("id"),
-            "thumbnail": item.get("snippet", {}).get("thumbnails", {}).get("default", {}).get("url"),
-        }
-        for item in response.json().get("items", [])
-    ]
-
-    return {"ytChannels": yt_channels}
+    return {"ytChannels": yt_channels, "twitchChannels": ttv_channels}
 
 
 _YT_NS = "http://www.youtube.com/xml/schemas/2015"
@@ -452,6 +516,11 @@ general_yt_channels = [
     "UCAZ7Igee5kevvXLNkIhj4gA"
 ]
 
+general_ttv_channels = [
+    "425929462",
+    "680366678"
+]
+
 video_trigger_words = [
     "blaze",
     "lethal league",
@@ -460,6 +529,59 @@ video_trigger_words = [
 
 # Simple in-memory cache – persists for the lifetime of the Lambda execution environment.
 _all_yt_channels_cache: dict | None = None
+_twitch_token_cache: str | None = None
+
+
+async def _get_twitch_token(http_client: AsyncClient) -> str:
+    global _twitch_token_cache
+    if _twitch_token_cache:
+        return _twitch_token_cache
+    response = await http_client.post(
+        "https://id.twitch.tv/oauth2/token",
+        params={
+            "client_id": TWITCH_CLIENT_ID,
+            "client_secret": TWITCH_CLIENT_SECRET,
+            "grant_type": "client_credentials",
+        },
+    )
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=response.status_code,
+            detail=f"Twitch token error: {response.text}",
+        )
+    _twitch_token_cache = response.json()["access_token"]
+    print("_get_twitch_token – obtained new Twitch token")
+    return _twitch_token_cache
+
+
+async def _fetch_twitch_users(http_client: AsyncClient, user_ids: list[str]) -> list[dict]:
+    if not user_ids:
+        return []
+    token = await _get_twitch_token(http_client)
+    headers = {
+        "Client-Id": TWITCH_CLIENT_ID,
+        "Authorization": f"Bearer {token}",
+    }
+    results: list[dict] = []
+    batches = [user_ids[i:i + 100] for i in range(0, len(user_ids), 100)]
+    print(f"_fetch_twitch_users – fetching {len(user_ids)} Twitch user(s) in {len(batches)} batch(es)")
+    for batch in batches:
+        params = [("id", uid) for uid in batch]
+        response = await http_client.get(
+            "https://api.twitch.tv/helix/users",
+            headers=headers,
+            params=params,
+        )
+        if response.status_code != 200:
+            print(f"_fetch_twitch_users – HTTP {response.status_code}: {response.text}")
+            continue
+        for user in response.json().get("data", []):
+            results.append({
+                "id": user["id"],
+                "title": user["display_name"],
+                "thumbnail": user.get("profile_image_url"),
+            })
+    return results
 
 
 @app.get(
@@ -474,13 +596,13 @@ _all_yt_channels_cache: dict | None = None
     },
     tags=["Socials"],
 )
-async def get_all_yt_channels():
+async def get_all_socials():
     global _all_yt_channels_cache
 
-    print("get_all_yt_channels called")
+    print("get_all_socials called")
 
     if _all_yt_channels_cache is not None:
-        print("get_all_yt_channels – returning cached result")
+        print("get_all_socials – returning cached result")
         return _all_yt_channels_cache
 
     general_ids: set[str] = set(general_yt_channels)
@@ -494,7 +616,7 @@ async def get_all_yt_channels():
     all_channel_ids = list(general_ids | player_ids)
     batches = [all_channel_ids[i:i + 50] for i in range(0, len(all_channel_ids), 50)]
 
-    print(f"get_all_yt_channels – fetching {len(all_channel_ids)} channels in {len(batches)} batch(es)")
+    print(f"get_all_socials – fetching {len(all_channel_ids)} channels in {len(batches)} batch(es)")
 
     fetched: dict[str, dict] = {}
 
@@ -526,7 +648,7 @@ async def get_all_yt_channels():
 
         published_after = datetime.now(timezone.utc) - timedelta(weeks=2)
 
-        print(f"get_all_yt_channels – fetching RSS feeds for {len(fetched)} channel(s) in parallel")
+        print(f"get_all_socials – fetching RSS feeds for {len(fetched)} channel(s) in parallel")
 
         rss_semaphore = asyncio.Semaphore(10)
         rss_results = await asyncio.gather(*[
@@ -535,11 +657,11 @@ async def get_all_yt_channels():
         ])
         recent_video_ids: list[str] = [vid for sublist in rss_results for vid in sublist]
 
-        print(f"get_all_yt_channels – {len(recent_video_ids)} video(s) found in RSS feeds from the last week")
+        print(f"get_all_socials – {len(recent_video_ids)} video(s) found in RSS feeds from the last week")
 
         video_batches = [recent_video_ids[i:i + 50] for i in range(0, len(recent_video_ids), 50)]
         print(
-            f"get_all_yt_channels – checking tags for {len(recent_video_ids)} recent video(s) in {len(video_batches)} batch(es)")
+            f"get_all_socials – checking tags for {len(recent_video_ids)} recent video(s) in {len(video_batches)} batch(es)")
 
         blaze_video_ids: list[dict] = []
         for video_batch in video_batches:
@@ -552,7 +674,7 @@ async def get_all_yt_channels():
                 "https://www.googleapis.com/youtube/v3/videos", params=v_params
             )
             if v_response.status_code != 200:
-                print(f"get_all_yt_channels – failed to fetch video details: {v_response.status_code}")
+                print(f"get_all_socials – failed to fetch video details: {v_response.status_code}")
                 continue
             for item in v_response.json().get("items", []):
                 snippet = item.get("snippet", {})
@@ -569,7 +691,25 @@ async def get_all_yt_channels():
                         "publishedAt": snippet.get("publishedAt"),
                     })
 
-        print(f"get_all_yt_channels – {len(blaze_video_ids)} video(s) passed the trigger-word filter")
+        print(f"get_all_socials – {len(blaze_video_ids)} video(s) passed the trigger-word filter")
+
+        # ── Twitch ────────────────────────────────────────────────────────────────
+        general_ttv_ids: set[str] = set(general_ttv_channels)
+        player_ttv_ids: set[str] = set()
+        ttv_channel_to_surrogate: dict[str, int] = {}
+        for player in _players_list:
+            for ttv_id in player.get("twitchChannelIds", []):
+                player_ttv_ids.add(ttv_id)
+                ttv_channel_to_surrogate[ttv_id] = player["surrogateId"]
+
+        all_ttv_ids = list(general_ttv_ids | player_ttv_ids)
+        fetched_ttv: dict[str, dict] = {}
+        if all_ttv_ids:
+            ttv_users = await _fetch_twitch_users(http_client, all_ttv_ids)
+            for user in ttv_users:
+                fetched_ttv[user["id"]] = user
+
+        print(f"get_all_socials – fetched {len(fetched_ttv)} Twitch channel(s)")
 
     result = {
         "generalYtChannels": [ch for ch_id, ch in fetched.items() if ch_id in general_ids],
@@ -579,6 +719,14 @@ async def get_all_yt_channels():
             if ch_id in player_ids
         ],
         "recentVideos": blaze_video_ids,
+        "generalTwitchChannels": [
+            ch for ch_id, ch in fetched_ttv.items() if ch_id in general_ttv_ids
+        ],
+        "playerTwitchChannels": [
+            {**ch, "surrogateId": ttv_channel_to_surrogate[ch_id]}
+            for ch_id, ch in fetched_ttv.items()
+            if ch_id in player_ttv_ids
+        ],
     }
     _all_yt_channels_cache = result
 

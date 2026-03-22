@@ -5,7 +5,7 @@ import {LoadingSpinner} from "@/components/LoadingSpinner.tsx";
 import {AccountCard, Platform} from "@/components/AccountCard.tsx";
 import {useGlobalState, useGlobalStateL1} from "@/state/GlobalStateProvider.tsx";
 
-type PlayerYtChannel = {
+type PlayerMediaChannel = {
     id: string,
     title: string,
     thumbnail: string,
@@ -18,7 +18,13 @@ type SocialsResponse = {
         title: string,
         thumbnail: string,
     }[],
-    playerYtChannels: PlayerYtChannel[],
+    generalTwitchChannels: {
+        id: string,
+        title: string,
+        thumbnail: string,
+    }[],
+    playerYtChannels: PlayerMediaChannel[],
+    playerTwitchChannels: PlayerMediaChannel[],
     recentVideos: {
         id: string,
         publishedAt: string
@@ -49,7 +55,7 @@ export const MediaPage = () => {
         return <LoadingSpinner/>;
     }
 
-    const sortByPlayerRanking = (a: PlayerYtChannel, b: PlayerYtChannel) => {
+    const sortByPlayerRanking = (a: PlayerMediaChannel, b: PlayerMediaChannel) => {
         if (a.title === "aTastyT0ast") return -1;
         if (b.title === "aTastyT0ast") return 1;
         if (a.surrogateId === b.surrogateId) {
@@ -67,6 +73,19 @@ export const MediaPage = () => {
 
         return (playerB.glickoStats.rating - 2 * playerB.glickoStats.deviation) - (playerA.glickoStats.rating - 2 * playerA.glickoStats.deviation);
     }
+
+    const playerMediaChannels = socialsResponse.playerYtChannels.map(channel => {
+        return {
+            ...channel,
+            platform: Platform.YouTube
+        }
+    }).concat(socialsResponse.playerTwitchChannels.map(channel => {
+        return {
+            ...channel,
+            platform: Platform.Twitch
+        }
+    }));
+
 
     return (
         <div
@@ -105,6 +124,15 @@ export const MediaPage = () => {
                 </CardHeader>
                 <CardContent className={"flex flex-row flex-wrap"}>
                     {
+                        socialsResponse.generalTwitchChannels
+                            .sort((a, b) => b.title.localeCompare(a.title))
+                            .map((twitchChannel) => (
+                                <AccountCard avatarUrl={twitchChannel.thumbnail} username={twitchChannel.title}
+                                             link={"https://www.twitch.tv/" + twitchChannel.title}
+                                             platform={Platform.Twitch}/>
+                            ))
+                    }
+                    {
                         socialsResponse.generalYtChannels
                             .sort((a, b) => a.title.localeCompare(b.title))
                             .map((ytChannel) => (
@@ -121,13 +149,19 @@ export const MediaPage = () => {
                 </CardHeader>
                 <CardContent className={"flex flex-row flex-wrap"}>
                     {
-                        socialsResponse.playerYtChannels
+                        playerMediaChannels
                             .sort(sortByPlayerRanking)
-                            .map((ytChannel) => (
-                                <AccountCard avatarUrl={ytChannel.thumbnail} username={ytChannel.title}
-                                             link={`https://www.youtube.com/channel/${ytChannel.id}`}
-                                             platform={Platform.YouTube}/>
-                            ))
+                            .map((channel) => {
+                                let link = `https://www.youtube.com/channel/${channel.id}`;
+                                if (channel.platform === Platform.Twitch) {
+                                    link = `https://www.twitch.tv/${channel.title}`;
+                                }
+                                return (
+                                    <AccountCard avatarUrl={channel.thumbnail} username={channel.title}
+                                                 link={link}
+                                                 platform={channel.platform}/>
+                                );
+                            })
                     }
                 </CardContent>
             </Card>

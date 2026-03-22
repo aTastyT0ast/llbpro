@@ -23,6 +23,11 @@ type PlayerSocialsResponse = {
         id: string,
         title: string,
         thumbnail: string,
+    }[],
+    twitchChannels: {
+        id: string,
+        title: string,
+        thumbnail: string,
     }[]
 }
 
@@ -97,6 +102,16 @@ export const PlayerProfile: FC<PlayerProfileProps> = (props) => {
         />
     )) || [];
 
+    const twitchChannels = socialsResponse?.twitchChannels?.map(channel => (
+        <AccountCard
+            key={channel.id}
+            avatarUrl={channel.thumbnail}
+            link={"https://www.twitch.tv/" + channel.title}
+            username={channel.title}
+            platform={Platform.Twitch}
+        />
+    )) || [];
+
     const isNorthAmerican = player.country === Country.NA;
     const countryFlag = player.country && !isNorthAmerican
         ? <LoadingImage src={getCountryFlag(player.country)} className={"h-7"}/>
@@ -157,9 +172,10 @@ export const PlayerProfile: FC<PlayerProfileProps> = (props) => {
                 {isLoading && <div className={"flex justify-center items-center mt-4"}>
                     <LoaderPinwheel className={"spin h-10 w-10"}/>
                 </div>}
-                {ytChannels.length > 0 && <ScrollArea className="w-full">
+                {(ytChannels.length > 0 || twitchChannels.length > 0) && <ScrollArea className="w-full">
                     <div className={"accounts"}>
                         {ytChannels}
+                        {twitchChannels}
                     </div>
                     <ScrollBar orientation="horizontal"/>
                 </ScrollArea>}

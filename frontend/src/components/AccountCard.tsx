@@ -3,6 +3,7 @@ import './AccountCard.css'
 import challongeIcon from "../assets/challonge.svg";
 import ggIcon from "../assets/gg.svg";
 import ytIcon from "../assets/yt.png";
+import twitchIcon from "../assets/twitch.png";
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip.tsx";
 import {ImageOff, LoaderPinwheel} from "lucide-react";
 
@@ -10,6 +11,7 @@ export enum Platform {
     Challonge = "Challonge",
     GG = "GG",
     YouTube = "YouTube",
+    Twitch = "Twitch",
 }
 
 export interface AccountCardProps {
@@ -33,6 +35,8 @@ export const AccountCard: FC<AccountCardProps> = (props) => {
                 return ggIcon;
             case Platform.YouTube:
                 return ytIcon;
+            case Platform.Twitch:
+                return twitchIcon;
         }
     }
 

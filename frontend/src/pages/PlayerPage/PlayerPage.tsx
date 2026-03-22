@@ -31,7 +31,7 @@ export const PlayerPage: FC = () => {
         } else {
             document.title = SITE_TITLE;
         }
-    }, [correctMapping]);
+    }, [correctMapping, playerIdString]);
 
     useEffect(() => {
         if (scrollRef.current) {

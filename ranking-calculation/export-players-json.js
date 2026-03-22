@@ -21,11 +21,12 @@ const playersWithSteam = String(fs.readFileSync('../analysis/steam/steam_ids.csv
 
 const playersWithSocials = String(fs.readFileSync('assets/socials.csv')).split("\r\n").slice(1)
     .map(line => {
-        const [name, challongeId, yt_channel_ids] = line.split(",");
-        const ytChannelIds = yt_channel_ids.split(";").map(steamId => steamId.trim()).filter(steamId => steamId);
-        return {name, challongeId: parseInt(challongeId), ytChannelIds};
+        const [name, challongeId, yt_channel_ids, twitch_channel_ids] = line.split(",");
+        const ytChannelIds = yt_channel_ids.split(";").map(channelId => channelId.trim()).filter(steamId => steamId);
+        const twitchChannelIds = twitch_channel_ids.split(";").map(channelId => channelId.trim()).filter(steamId => steamId);
+        return {name, challongeId: parseInt(challongeId), ytChannelIds, twitchChannelIds};
     })
-    .filter(({ytChannelIds}) => ytChannelIds.length > 0);
+    .filter(({ytChannelIds, twitchChannelIds}) => ytChannelIds.length > 0 || twitchChannelIds.length > 0);
 
 const getPlayerDataDTO = (player) => {
     return {
@@ -38,6 +39,7 @@ const getPlayerDataDTO = (player) => {
         steamIds: player.steamIds,
         discordIds: player.discordIds,
         ytChannelIds: player.ytChannelIds,
+        twitchChannelIds: player.twitchChannelIds,
     };
 };
 
@@ -47,6 +49,8 @@ const players = correctMappingBlaze.map(blazePlayer => {
             ...blazePlayer,
             steamIds: [],
             discordIds: [],
+            ytChannelIds: [],
+            twitchChannelIds: [],
         };
     }
 
@@ -63,6 +67,7 @@ const players = correctMappingBlaze.map(blazePlayer => {
         steamIds: steamPlayer ? steamPlayer.steamIds : [],
         discordIds: discordPlayer ? discordPlayer.discordIds : [],
         ytChannelIds: playerWithSocials ? playerWithSocials.ytChannelIds : [],
+        twitchChannelIds: playerWithSocials ? playerWithSocials.twitchChannelIds : [],
     };
 });
 
@@ -74,6 +79,8 @@ const remainingPlayers = correctMappingL1
                 ...l1Player,
                 steamIds: [],
                 discordIds: [],
+                ytChannelIds: [],
+                twitchChannelIds: [],
             };
         }
 
@@ -88,6 +95,7 @@ const remainingPlayers = correctMappingL1
             steamIds: steamPlayer ? steamPlayer.steamIds : [],
             discordIds: discordPlayer ? discordPlayer.discordIds : [],
             ytChannelIds: playerWithSocials ? playerWithSocials.ytChannelIds : [],
+            twitchChannelIds: playerWithSocials ? playerWithSocials.twitchChannelIds : [],
         };
     });
 
