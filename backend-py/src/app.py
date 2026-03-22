@@ -52,6 +52,9 @@ class PlayerSocialsResponse(BaseModel):
 
 class RecentVideoResponse(BaseModel):
     id: str = Field(description="YouTube video ID.")
+    title: str = Field(description="Title of the YouTube video.")
+    channelTitle: str = Field(description="Display name of the channel that uploaded the video.")
+    channelThumbnail: Optional[str] = Field(default=None, description="Thumbnail URL of the uploading channel.")
     publishedAt: datetime = Field(description="UTC datetime when the video was published.")
 
     model_config = {
@@ -59,6 +62,8 @@ class RecentVideoResponse(BaseModel):
             "examples": [
                 {
                     "id": "dQw4w9WgXcQ",
+                    "title": "Amazing Lethal League Blaze Match",
+                    "channelTitle": "LLB Stadium",
                     "publishedAt": "2026-03-10T18:00:00+00:00",
                 }
             ]
@@ -688,6 +693,9 @@ async def get_all_socials():
                 ):
                     blaze_video_ids.append({
                         "id": item["id"],
+                        "title": snippet.get("title"),
+                        "channelTitle": snippet.get("channelTitle"),
+                        "channelThumbnail": fetched.get(snippet.get("channelId"), {}).get("thumbnail"),
                         "publishedAt": snippet.get("publishedAt"),
                     })
 

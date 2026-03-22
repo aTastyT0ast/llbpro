@@ -4,6 +4,7 @@ import {SITE_TITLE} from "@/shared/constants.ts";
 import {LoadingSpinner} from "@/components/LoadingSpinner.tsx";
 import {AccountCard, Platform} from "@/components/AccountCard.tsx";
 import {useGlobalState, useGlobalStateL1} from "@/state/GlobalStateProvider.tsx";
+import ytIcon from "@/assets/youtube.svg";
 
 type PlayerMediaChannel = {
     id: string,
@@ -27,6 +28,9 @@ type SocialsResponse = {
     playerTwitchChannels: PlayerMediaChannel[],
     recentVideos: {
         id: string,
+        title: string,
+        channelTitle: string,
+        channelThumbnail: string | null,
         publishedAt: string
     }[]
 }
@@ -102,19 +106,44 @@ export const MediaPage = () => {
                         socialsResponse.recentVideos
                             .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
                             .map((video) => {
-                                let url = "https://www.youtube.com/embed/" + video.id;
-
                                 return (
-                                    <div key={video.id}>
-                                        <iframe width="420"
-                                                height="300"
-                                                src={url}
-                                                title="YouTube video player"
-                                                frameBorder="0"
-                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                                referrerPolicy="strict-origin-when-cross-origin"
-                                                allowFullScreen></iframe>
-                                    </div>
+                                    <a key={video.id}
+                                       href={`https://www.youtube.com/watch?v=${video.id}`}
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       className="relative block">
+                                        <img
+                                            src={`https://img.youtube.com/vi/${video.id}/hqdefault.jpg`}
+                                            alt="YouTube Thumbnail"
+                                            width="420"
+                                            height="315"
+                                            className="object-cover"
+                                        />
+                                        <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/80 to-transparent px-2 py-2">
+                                            <div className="flex flex-row items-center gap-2">
+                                                {video.channelThumbnail && (
+                                                    <img
+                                                        src={video.channelThumbnail}
+                                                        alt={video.channelTitle}
+                                                        width="32"
+                                                        height="32"
+                                                        className="rounded-full shrink-0"
+                                                    />
+                                                )}
+                                                <div className="flex flex-col min-w-0">
+                                                    <p className="text-white text-sm truncate">{video.title}</p>
+                                                    <p className="text-white/70 text-xs truncate">{video.channelTitle}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <img
+                                            src={ytIcon}
+                                            alt="YouTube Play Button"
+                                            width="68"
+                                            height="48"
+                                            className="absolute inset-0 m-auto pointer-events-none"
+                                        />
+                                    </a>
                                 );
                             })
                     }

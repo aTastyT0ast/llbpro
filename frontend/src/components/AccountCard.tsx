@@ -2,7 +2,7 @@ import {FC, useState} from "react";
 import './AccountCard.css'
 import challongeIcon from "../assets/challonge.svg";
 import ggIcon from "../assets/gg.svg";
-import ytIcon from "../assets/yt.png";
+import ytIcon from "../assets/youtube.svg";
 import twitchIcon from "../assets/twitch.png";
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip.tsx";
 import {ImageOff, LoaderPinwheel} from "lucide-react";
