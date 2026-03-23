@@ -35,7 +35,6 @@ export class StaticSite extends Construct {
       comment: `OAI for ${name}`,
     });
 
-    // default s3 bucket
     const siteBucket = new s3.Bucket(this, 'LLBProS3Bucket', {
       bucketName: 'llbpro-ui',
       publicReadAccess: false,
@@ -54,7 +53,6 @@ export class StaticSite extends Construct {
     // TLS certificate
     const certificate = acm.Certificate.fromCertificateArn(this, 'SiteCertificate', props.certificateArn);
 
-    // cloudfront distribution
     const distribution = new cloudfront.Distribution(this, 'LLBProDistribution', {
       certificate: certificate,
       defaultRootObject: 'index.html',
@@ -80,14 +78,12 @@ export class StaticSite extends Construct {
     });
     new CfnOutput(this, 'LLBProDistributionId', { value: distribution.distributionId });
 
-    // Route53 alias record for the CloudFront distribution
     new route53.ARecord(this, 'LLBProSiteAliasRecord', {
       recordName: siteDomain,
       target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(distribution)),
       zone,
     });
 
-    // Deploy site contents to S3 bucket
     new s3deploy.BucketDeployment(this, 'DeployWithInvalidation', {
       sources: [s3deploy.Source.asset(path.join(__dirname, '..', '..', '..', '/frontend/dist'))],
       destinationBucket: siteBucket,

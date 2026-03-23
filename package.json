@@ -1,5 +1,5 @@
 {
-  "name": "braacket2",
+  "name": "llblaze.pro",
   "version": "1.0.0",
   "description": "",
   "main": "tourney_scraper.js",
@@ -9,15 +9,13 @@
     "calc:all": "cd ranking-calculation && node ranking-setup-l1.js && node ranking-setup.js && node ranking-setup-l1.js && node assign-surrogate-ids.js && node optimize_last.js && node optimize_last_l1.js && node export-players-json.js"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.995.0",
-    "@aws-sdk/lib-dynamodb": "^3.995.0",
-    "discord.js": "14.18.0",
-    "fflate": "^0.8.2",
-    "glicko2": "^1.1.0",
-    "graphql": "^16.8.1",
-    "graphql-request": "^6.1.0",
-    "jsdom": "^24.0.0"
+    "discord.js": "14.25.1",
+    "fflate": "0.8.2",
+    "glicko2": "1.2.1",
+    "graphql": "16.13.1",
+    "graphql-request": "7.4.0",
+    "jsdom": "29.0.0"
   }
 }
