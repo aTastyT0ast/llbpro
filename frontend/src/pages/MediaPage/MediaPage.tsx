@@ -5,6 +5,7 @@ import {LoadingSpinner} from "@/components/LoadingSpinner.tsx";
 import {AccountCard, Platform} from "@/components/AccountCard.tsx";
 import {useGlobalState, useGlobalStateL1} from "@/state/GlobalStateProvider.tsx";
 import ytIcon from "@/assets/youtube.svg";
+import twitchIcon from "@/assets/twitch.png";
 
 type PlayerMediaChannel = {
     id: string,
@@ -29,9 +30,12 @@ type SocialsResponse = {
     recentVideos: {
         id: string,
         title: string,
+        url: string,
+        thumbnailUrl: string,
         channelTitle: string,
         channelThumbnail: string | null,
-        publishedAt: string
+        publishedAt: string,
+        platform: "youtube" | "twitch",
     }[]
 }
 
@@ -108,13 +112,13 @@ export const MediaPage = () => {
                             .map((video) => {
                                 return (
                                     <a key={video.id}
-                                       href={`https://www.youtube.com/watch?v=${video.id}`}
+                                       href={video.url}
                                        target="_blank"
                                        rel="noopener noreferrer"
                                        className="relative block">
                                         <img
-                                            src={`https://img.youtube.com/vi/${video.id}/hqdefault.jpg`}
-                                            alt="YouTube Thumbnail"
+                                            src={video.thumbnailUrl}
+                                            alt="Video Thumbnail"
                                             width="420"
                                             height="315"
                                             className="object-cover"
@@ -137,8 +141,8 @@ export const MediaPage = () => {
                                             </div>
                                         </div>
                                         <img
-                                            src={ytIcon}
-                                            alt="YouTube Play Button"
+                                            src={video.platform === "twitch" ? twitchIcon : ytIcon}
+                                            alt={video.platform === "twitch" ? "Twitch Icon" : "YouTube Play Button"}
                                             width="68"
                                             height="48"
                                             className="absolute inset-0 m-auto pointer-events-none"

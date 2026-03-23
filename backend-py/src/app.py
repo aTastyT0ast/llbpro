@@ -51,11 +51,14 @@ class PlayerSocialsResponse(BaseModel):
 
 
 class RecentVideoResponse(BaseModel):
-    id: str = Field(description="YouTube video ID.")
-    title: str = Field(description="Title of the YouTube video.")
+    id: str = Field(description="Video ID (YouTube video ID or Twitch VOD ID).")
+    title: str = Field(description="Title of the video.")
+    url: str = Field(description="Direct URL to the video.")
+    thumbnailUrl: str = Field(description="Thumbnail image URL of the video.")
     channelTitle: str = Field(description="Display name of the channel that uploaded the video.")
     channelThumbnail: Optional[str] = Field(default=None, description="Thumbnail URL of the uploading channel.")
     publishedAt: datetime = Field(description="UTC datetime when the video was published.")
+    platform: str = Field(description="Platform the video is hosted on. Either 'youtube' or 'twitch'.")
 
     model_config = {
         "json_schema_extra": {
@@ -63,8 +66,12 @@ class RecentVideoResponse(BaseModel):
                 {
                     "id": "dQw4w9WgXcQ",
                     "title": "Amazing Lethal League Blaze Match",
+                    "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                    "thumbnailUrl": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
                     "channelTitle": "LLB Stadium",
+                    "channelThumbnail": "https://yt3.ggpht.com/ytc/example=s88-c-k-c0x00ffffff-no-rj",
                     "publishedAt": "2026-03-10T18:00:00+00:00",
+                    "platform": "youtube",
                 }
             ]
         }
@@ -532,6 +539,11 @@ video_trigger_words = [
     "llb",
 ]
 
+twitch_game_ids = [
+    "369416",  # Lethal League Blaze
+    "505619",  # Lethal League
+]
+
 # Simple in-memory cache – persists for the lifetime of the Lambda execution environment.
 _all_yt_channels_cache: dict | None = None
 _twitch_token_cache: str | None = None
@@ -586,6 +598,105 @@ async def _fetch_twitch_users(http_client: AsyncClient, user_ids: list[str]) -> 
                 "title": user["display_name"],
                 "thumbnail": user.get("profile_image_url"),
             })
+    return results
+
+
+async def _fetch_twitch_recent_videos(
+        http_client: AsyncClient,
+        user_ids: list[str],
+        fetched_ttv: dict[str, dict],
+        published_after: datetime,
+) -> list[dict]:
+    if not user_ids:
+        return []
+    token = await _get_twitch_token(http_client)
+    headers = {
+        "Client-Id": TWITCH_CLIENT_ID,
+        "Authorization": f"Bearer {token}",
+    }
+    results: list[dict] = []
+    for user_id in user_ids:
+        response = await http_client.get(
+            "https://api.twitch.tv/helix/videos",
+            headers=headers,
+            params={"user_id": user_id},
+        )
+        if response.status_code != 200:
+            print(f"_fetch_twitch_recent_videos – HTTP {response.status_code} for user_id {user_id}: {response.text}")
+            continue
+        channel = fetched_ttv.get(user_id, {})
+        for video in response.json().get("data", []):
+            published_at_str = video.get("published_at", "")
+            published_at = datetime.fromisoformat(published_at_str.replace("Z", "+00:00"))
+            if published_at < published_after:
+                continue
+            thumbnail_url = (
+                video.get("thumbnail_url", "")
+                .replace("%{width}", "640")
+                .replace("%{height}", "360")
+            )
+            results.append({
+                "id": video["id"],
+                "title": video["title"],
+                "url": video["url"],
+                "thumbnailUrl": thumbnail_url,
+                "channelTitle": video["user_name"],
+                "channelThumbnail": channel.get("thumbnail"),
+                "publishedAt": published_at_str,
+                "platform": "twitch",
+            })
+    print(f"_fetch_twitch_recent_videos – found {len(results)} recent Twitch VOD(s)")
+    return results
+
+
+async def _fetch_twitch_videos_by_game(
+        http_client: AsyncClient,
+        game_ids: list[str],
+        allowed_user_ids: set[str],
+        fetched_ttv: dict[str, dict],
+        published_after: datetime,
+) -> list[dict]:
+    if not game_ids or not allowed_user_ids:
+        return []
+    token = await _get_twitch_token(http_client)
+    headers = {
+        "Client-Id": TWITCH_CLIENT_ID,
+        "Authorization": f"Bearer {token}",
+    }
+    results: list[dict] = []
+    for game_id in game_ids:
+        response = await http_client.get(
+            "https://api.twitch.tv/helix/videos",
+            headers=headers,
+            params={"game_id": game_id, "first": 100},
+        )
+        if response.status_code != 200:
+            print(f"_fetch_twitch_videos_by_game – HTTP {response.status_code} for game_id {game_id}: {response.text}")
+            continue
+        for video in response.json().get("data", []):
+            if video.get("user_id") not in allowed_user_ids:
+                continue
+            published_at_str = video.get("published_at", "")
+            published_at = datetime.fromisoformat(published_at_str.replace("Z", "+00:00"))
+            if published_at < published_after:
+                continue
+            channel = fetched_ttv.get(video.get("user_id"), {})
+            thumbnail_url = (
+                video.get("thumbnail_url", "")
+                .replace("%{width}", "640")
+                .replace("%{height}", "360")
+            )
+            results.append({
+                "id": video["id"],
+                "title": video["title"],
+                "url": video["url"],
+                "thumbnailUrl": thumbnail_url,
+                "channelTitle": video["user_name"],
+                "channelThumbnail": channel.get("thumbnail"),
+                "publishedAt": published_at_str,
+                "platform": "twitch",
+            })
+    print(f"_fetch_twitch_videos_by_game – found {len(results)} video(s) across game IDs {game_ids}")
     return results
 
 
@@ -694,9 +805,12 @@ async def get_all_socials():
                     blaze_video_ids.append({
                         "id": item["id"],
                         "title": snippet.get("title"),
+                        "url": f"https://www.youtube.com/watch?v={item['id']}",
+                        "thumbnailUrl": f"https://img.youtube.com/vi/{item['id']}/hqdefault.jpg",
                         "channelTitle": snippet.get("channelTitle"),
                         "channelThumbnail": fetched.get(snippet.get("channelId"), {}).get("thumbnail"),
                         "publishedAt": snippet.get("publishedAt"),
+                        "platform": "youtube",
                     })
 
         print(f"get_all_socials – {len(blaze_video_ids)} video(s) passed the trigger-word filter")
@@ -719,6 +833,16 @@ async def get_all_socials():
 
         print(f"get_all_socials – fetched {len(fetched_ttv)} Twitch channel(s)")
 
+        twitch_videos, twitch_game_videos = await asyncio.gather(
+            _fetch_twitch_recent_videos(http_client, all_ttv_ids, fetched_ttv, published_after),
+            _fetch_twitch_videos_by_game(http_client, twitch_game_ids, set(all_ttv_ids), fetched_ttv, published_after),
+        )
+
+        game_video_ids: set[str] = {v["id"] for v in twitch_game_videos}
+        merged_twitch_videos = [v for v in twitch_videos if v["id"] in game_video_ids]
+
+        print(f"get_all_socials – {len(merged_twitch_videos)} Twitch video(s) after game filter")
+
     result = {
         "generalYtChannels": [ch for ch_id, ch in fetched.items() if ch_id in general_ids],
         "playerYtChannels": [
@@ -726,7 +850,7 @@ async def get_all_socials():
             for ch_id, ch in fetched.items()
             if ch_id in player_ids
         ],
-        "recentVideos": blaze_video_ids,
+        "recentVideos": blaze_video_ids + merged_twitch_videos,
         "generalTwitchChannels": [
             ch for ch_id, ch in fetched_ttv.items() if ch_id in general_ttv_ids
         ],
