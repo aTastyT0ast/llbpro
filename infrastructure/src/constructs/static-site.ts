@@ -3,7 +3,6 @@ import { CfnOutput, Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as cloudfront_origins from 'aws-cdk-lib/aws-cloudfront-origins';
-import * as iam from 'aws-cdk-lib/aws-iam';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as targets from 'aws-cdk-lib/aws-route53-targets';
 import * as s3 from 'aws-cdk-lib/aws-s3';
@@ -31,23 +30,12 @@ export class StaticSite extends Construct {
     //   zoneName: props.domainName,
     // });
     const siteDomain = props.domainName;
-    const cloudfrontOAI = new cloudfront.OriginAccessIdentity(this, 'LLBPro-cloudfront-OAI', {
-      comment: `OAI for ${name}`,
-    });
-
     const siteBucket = new s3.Bucket(this, 'LLBProS3Bucket', {
       bucketName: 'llbpro-ui',
       publicReadAccess: false,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: RemovalPolicy.RETAIN,
     });
-
-    // grant s3 access to cloudfront
-    siteBucket.addToResourcePolicy(new iam.PolicyStatement({
-      actions: ['s3:GetObject'],
-      resources: [siteBucket.arnForObjects('*')],
-      principals: [new iam.CanonicalUserPrincipal(cloudfrontOAI.cloudFrontOriginAccessIdentityS3CanonicalUserId)],
-    }));
     new CfnOutput(this, 'LLBProBucket', { value: siteBucket.bucketName });
 
     // TLS certificate
@@ -67,9 +55,7 @@ export class StaticSite extends Construct {
         },
       ],
       defaultBehavior: {
-        origin: cloudfront_origins.S3BucketOrigin.withOriginAccessIdentity(siteBucket, {
-          originAccessControlId: cloudfrontOAI.originAccessIdentityId,
-        }),
+        origin: cloudfront_origins.S3BucketOrigin.withOriginAccessControl(siteBucket),
         allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         compress: true,
