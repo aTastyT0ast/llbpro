@@ -52,7 +52,7 @@ const optimizedJSON = correctMappingAsArray.map(player => ({
         a: player.challonge.accounts.map(acc => ({
             i: convertBase10ToBase64(acc.challongeId),
             n: acc.challongeUsername,
-            a: shortenChallongeAvatarUrl(acc.avatarUrl)
+            a: acc.avatarUrl ? shortenChallongeAvatarUrl(acc.avatarUrl) : null
         })),
         p: player.challonge.participations.map(part => convertBase10ToBase64(part))
     },
@@ -260,7 +260,7 @@ const optiCh = chTourneys.map(({tournament}) => {
     }
 
     const correctLine = chTourneysSourceLines.find((line) => {
-        const [,csvName] = line.split(',');
+        const [, csvName] = line.split(',');
         return csvName.toLowerCase() === url.toLowerCase()
     });
 
@@ -268,7 +268,7 @@ const optiCh = chTourneys.map(({tournament}) => {
         throw new Error("Could not find source line for ch tourney with name: " + name);
     }
 
-    const [,,,ytVods,twitchVods,prizepoolString] = correctLine.split(',');
+    const [, , , ytVods, twitchVods, prizepoolString] = correctLine.split(',');
     const prizepool = prizepoolString ? prizepoolString : null;
 
     return [
@@ -342,7 +342,7 @@ const optiGG = ggTourneys.map((entry) => {
         throw new Error("Could not find source line for gg tourney with slug: " + slug);
     }
 
-    const [,ytVods,twitchVods,prizepoolString] = correctLine.split(',');
+    const [, ytVods, twitchVods, prizepoolString] = correctLine.split(',');
     const prizepool = prizepoolString ? prizepoolString : null;
 
     let tourneyType = 1; // default to double elim

@@ -52,9 +52,16 @@ export const PlayerProfile: FC<PlayerProfileProps> = (props) => {
                     setSocialsResponse(await response.json() as PlayerSocialsResponse)
                 }
             })
+            .catch((error: unknown) => {
+                if ((error as Error).name !== 'AbortError') {
+                    console.error(error);
+                }
+            })
             .finally(() => setIsLoading(false));
 
-        return () => abortController.abort();
+        return () => {
+            abortController.abort()
+        };
     }, [player]);
 
     const challongeAccountCards = player.challonge.accounts.map(account => {
